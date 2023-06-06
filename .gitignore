@@ -1,10 +1,21 @@
 # File exclusion
+.*
+.python-version
 
 # Folder exclusion
+.venv/*
 api_logs/*
 logs/*
 raw_data/*
 processed_data/*
+
+work_airflow/*
+model_cosine-similarity/*
+model_kmeans/*
+scripts_mysql/*
+scripts_preprocess/*
+Utils/*
+
 
 # Folder keep
 !api_logs/.gitkeep
@@ -12,6 +23,3 @@ processed_data/*
 !raw_data/.gitkeep 
 !processed_data/.gitkeep 
 
-
-# Folder exlusion : Work
-work_airflow
