@@ -1,0 +1,17 @@
+# File exclusion
+
+# Folder exclusion
+api_logs/*
+logs/*
+raw_data/*
+processed_data/*
+
+# Folder keep
+!api_logs/.gitkeep
+!logs/.gitkeep 
+!raw_data/.gitkeep 
+!processed_data/.gitkeep 
+
+
+# Folder exlusion : Work
+work_airflow
