@@ -122,7 +122,7 @@ services:
       MYSQL_ROOT_PASSWORD: "my-secret-pw"
       MYSQL_DATABASE: "db_movie"
     volumes:
-      - /home/ubuntu/MLOPS-Movie-Recommandation/db_dump:/docker-entrypoint-initdb.d
+      - ./db_dump:/docker-entrypoint-initdb.d
     ports:
       - "3306:3306"
     healthcheck:
