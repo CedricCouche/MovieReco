@@ -84,7 +84,8 @@ sudo chmod -R 777 logs/ raw_data/ processed_data/ db_dump/ api_logs/
 Airflow requires an initialisation phase.
 
 ```
-docker-compose up airflow-init
+sudo service docker start
+sudo docker-compose up airflow-init
 ```
 
 If everything went well, last line should display "mlops-movie-recommandation_airflow-init_1 exited with code 0"
@@ -93,7 +94,7 @@ If everything went well, last line should display "mlops-movie-recommandation_ai
 
 Start of container in a detached mode
 ```
-docker-compose up -d
+sudo docker-compose up -d
 ```
 
 #### SSH Tunnel initialisation
