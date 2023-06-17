@@ -1,9 +1,9 @@
 # File exclusion
 .*
-.python-version
 
 # Folder exclusion
 .venv/*
+work-in-progress
 api_logs/*
 logs/*
 raw_data/*
