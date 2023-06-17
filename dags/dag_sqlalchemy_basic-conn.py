@@ -13,6 +13,8 @@ import numpy as np
 import requests
 import string
 
+#import mysql.connector
+
 import sqlalchemy
 from sqlalchemy import Table, Column, Integer, String, ForeignKey, MetaData, create_engine, text, inspect
 from sqlalchemy_utils import database_exists, create_database
@@ -22,9 +24,9 @@ from sqlalchemy_utils import database_exists, create_database
 # -------------------------------------- #
 
 my_dag = DAG(
-    dag_id='Load_MySQL',
-    description='Load_MySQL',
-    tags=['DB'],
+    dag_id='sqlalchemy-basic-conn',
+    description='sqlalchemy-basic-conn',
+    tags=['TEST'],
     schedule_interval=datetime.timedelta(minutes=30),
     default_args={
         'owner': 'airflow',
@@ -50,6 +52,7 @@ mysql_url = 'container_mysql:3306'
 mysql_user = 'root'
 mysql_password = 'my-secret-pw'
 database_name = 'db_movie'
+#mysql_host = 'container_mysql'
 
 
 # -------------------------------------- #
@@ -58,13 +61,13 @@ database_name = 'db_movie'
 
 
 
-def load_mysql_pandas(source_path):
+def read_sqlalchemy(source_path):
     """
     This function load data from a local file and store it in MySQL database
     """
     print('load_mysql started')
 
-    # Creating the URL connection
+    # Connection
     connection_url = 'mysql://{user}:{password}@{url}/{database}'.format(
         user=mysql_user,
         password=mysql_password,
@@ -73,67 +76,36 @@ def load_mysql_pandas(source_path):
         )
 
     engine = create_engine(connection_url)
-    conn = engine.connect()
-    inspector = inspect(engine)
+    #conn = engine.connect()
 
+
+    # Query
   
-    # Drop of the table
-    sql = text('DROP TABLE IF EXISTS table_api;')
-    result = engine.execute(sql)
-    print('table dropped')
+    query = """
+    SELECT * FROM table_api LIMIT 5;
+    """
 
-    # Table creation
-    inspector = inspect(engine)
-
-    if not 'table_api' in inspector.get_table_names():
-        meta = MetaData()
-
-        table_api = Table(
-        'table_api', meta, 
-        Column('tconst', String(15), primary_key=True), 
-        Column('titleType', String(150)), 
-        Column('primaryTitle', String(150)),
-        Column('startYear', Integer),
-        Column('runtimeMinutes', Integer),
-        Column('genres',  String(150)),
-        Column('runtimeCategory',  String(2)),
-        Column('yearCategory',  String(2)),
-        Column('combined_features',  String(255))
-        ) 
-
-        meta.create_all(engine)
-        print('table created')
-
-    # Load data from .csv
-    column_list = [
-        'tconst', 'titleType', 'primaryTitle','startYear','runtimeMinutes', 'genres', 'runtimeCategory', 'yearCategory','combined_features']
-    dict_types = {'tconst':object,'titleType':object, 'primaryTitle':object, 'startYear':int, 'runtimeMinutes':int, 'genres':object, 'runtimeCategory':object, 'yearCategory':object, 'combined_features':object}
-
-    df = pd.read_csv(source_path, usecols= column_list, dtype=dict_types, compression = 'zip', sep = ',')
-
-    print('pandas loaded')
+    df = pd.read_sql(query, engine)
 
 
-    # Store data in MySQL DB
-    df.to_sql('table_api', conn, if_exists='replace', index=False)
+    #conn.close()
 
-    conn.close()
-
+    print(df.head(5))
     print('load_mysql done')
 
     return 0
-
 
 # -------------------------------------- #
 # TASKS
 # -------------------------------------- #
 
 task1 = PythonOperator(
-    task_id='load_mysql',
-    python_callable=load_mysql_pandas,
+    task_id='read_sqlalchemy',
+    python_callable=read_sqlalchemy,
     op_kwargs={'source_path':path_processed_data + processed_filenames[3]},
     dag=my_dag
 )
+
 
 
 # -------------------------------------- #

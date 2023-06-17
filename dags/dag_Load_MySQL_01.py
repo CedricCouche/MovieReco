@@ -22,8 +22,8 @@ from sqlalchemy_utils import database_exists, create_database
 # -------------------------------------- #
 
 my_dag = DAG(
-    dag_id='Load_MySQL',
-    description='Load_MySQL',
+    dag_id='Load_MySQL_01',
+    description='Load_MySQL_01',
     tags=['DB'],
     schedule_interval=datetime.timedelta(minutes=30),
     default_args={
@@ -73,37 +73,9 @@ def load_mysql_pandas(source_path):
         )
 
     engine = create_engine(connection_url)
-    conn = engine.connect()
     inspector = inspect(engine)
 
   
-    # Drop of the table
-    sql = text('DROP TABLE IF EXISTS table_api;')
-    result = engine.execute(sql)
-    print('table dropped')
-
-    # Table creation
-    inspector = inspect(engine)
-
-    if not 'table_api' in inspector.get_table_names():
-        meta = MetaData()
-
-        table_api = Table(
-        'table_api', meta, 
-        Column('tconst', String(15), primary_key=True), 
-        Column('titleType', String(150)), 
-        Column('primaryTitle', String(150)),
-        Column('startYear', Integer),
-        Column('runtimeMinutes', Integer),
-        Column('genres',  String(150)),
-        Column('runtimeCategory',  String(2)),
-        Column('yearCategory',  String(2)),
-        Column('combined_features',  String(255))
-        ) 
-
-        meta.create_all(engine)
-        print('table created')
-
     # Load data from .csv
     column_list = [
         'tconst', 'titleType', 'primaryTitle','startYear','runtimeMinutes', 'genres', 'runtimeCategory', 'yearCategory','combined_features']
@@ -115,9 +87,8 @@ def load_mysql_pandas(source_path):
 
 
     # Store data in MySQL DB
-    df.to_sql('table_api', conn, if_exists='replace', index=False)
+    df.to_sql('table_api', engine, if_exists='replace', index=False)
 
-    conn.close()
 
     print('load_mysql done')
 
