@@ -24,7 +24,7 @@ from sqlalchemy_utils import database_exists, create_database
 my_dag = DAG(
     dag_id='Load_MySQL_01',
     description='Load_MySQL_01',
-    tags=['DB'],
+    tags=['DB','Process_A'],
     schedule_interval=datetime.timedelta(minutes=30),
     default_args={
         'owner': 'airflow',
@@ -89,7 +89,8 @@ def load_mysql_pandas(source_path):
     # Store data in MySQL DB
     df.to_sql('table_api', engine, if_exists='replace', index=False)
 
-
+    engine.dispose()   
+    
     print('load_mysql done')
 
     return 0

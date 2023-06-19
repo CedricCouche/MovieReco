@@ -24,7 +24,7 @@ from sqlalchemy_utils import database_exists, create_database
 my_dag = DAG(
     dag_id='Load_MySQL',
     description='Load_MySQL',
-    tags=['DB'],
+    tags=['DB','Process_A'],
     schedule_interval=datetime.timedelta(minutes=30),
     default_args={
         'owner': 'airflow',

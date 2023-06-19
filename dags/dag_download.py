@@ -18,7 +18,7 @@ import requests
 my_dag = DAG(
     dag_id='download_reduce',
     description='download_reduce',
-    tags=['download'],
+    tags=['download','Process_A'],
     schedule_interval=datetime.timedelta(minutes=30),
     default_args={
         'owner': 'airflow',
