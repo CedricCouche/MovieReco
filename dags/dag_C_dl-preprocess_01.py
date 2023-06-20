@@ -23,9 +23,9 @@ from sqlalchemy_utils import database_exists, create_database
 # -------------------------------------- #
 
 my_dag = DAG(
-    dag_id='download_C01',
-    description='download_C01',
-    tags=['download', 'Process_C'],
+    dag_id='download_C02',
+    description='download_C02',
+    tags=['download', 'Pre-Process', 'Process_C'],
     schedule_interval=datetime.timedelta(minutes=30),
     default_args={
         'owner': 'airflow',
@@ -87,7 +87,7 @@ def process_title_basics(source_path, destination_path):
         """
         This function clean the file title_basics, discretise some fields and reduce the size of the dataset
         """
-        print('process started')
+        print('process_title_basics started')
 
         # Load
         column_list = ['tconst', 'titleType', 'primaryTitle', 'startYear', 'runtimeMinutes', 'genres', 'isAdult']
@@ -171,14 +171,15 @@ def process_title_basics(source_path, destination_path):
             )
 
         engine = create_engine(connection_url)
+        conn = engine.connect()
         inspector = inspect(engine)
 
         # SQL Table : creation if not existing
-        if not 'test_c' in inspector.get_table_names():
+        if not 'imdb_titlebasics' in inspector.get_table_names():
             meta = MetaData()
 
-            test_c = Table(
-            'test_c', meta, 
+            imdb_titlebasics = Table(
+            'imdb_titlebasics', meta, 
             Column('tconst', String(15), primary_key=True), 
             Column('titleType', String(150)), 
             Column('primaryTitle', String(150)),
@@ -186,29 +187,29 @@ def process_title_basics(source_path, destination_path):
             Column('runtimeMinutes', Integer),
             Column('genres',  String(150)),
             Column('runtimeCategory',  String(2)),
-            Column('yearCategory',  String(2)),
-            Column('combined_features',  String(255))
+            Column('yearCategory',  String(2))
             ) 
 
             meta.create_all(engine)
-            print('table created')
 
 
         # Store data in MySQL DB
-        df.to_sql('test_c', engine, if_exists='replace', index=False)
+        df.to_sql('imdb_titlebasics', engine, if_exists='replace', index=False)
 
 
         # check
-        query = """ SELECT * FROM test_c LIMIT 5; """
+        query = """ SELECT * FROM imdb_titlebasics LIMIT 5; """
         df_check = pd.read_sql(query, engine)
         print(df_check.head(5))
-
+        df_check  = pd.DataFrame()
+        del df_check
 
         # Deletion of df to save memory
         df = pd.DataFrame()
         del df
 
-        print('load in mysql done')
+        conn.close()
+        print('process_title_basics done')
 
         return 0
 
@@ -372,77 +373,57 @@ def merge_content(source_path, destination_path):
         """
         Merge of processed tables
         """
-        print('merge started')
+        print('merge_content started')
+
+        # Connection to MySQL
+        connection_url = 'mysql://{user}:{password}@{url}/{database}'.format(
+            user=mysql_user,
+            password=mysql_password,
+            url=mysql_url,
+            database = database_name
+            )
+
+        engine = create_engine(connection_url)
+        conn = engine.connect()
+        inspector = inspect(engine)
 
         # Load
-        column_list = ['tconst', 'titleType', 'primaryTitle', 'startYear', 'runtimeMinutes', 'genres', 'runtimeCategory', 'yearCategory']
-        dict_types = {'tconst':object, 'titleType':object, 'primaryTitle':object, 'startYear':int, 'runtimeMinutes':int, 'genres':object, 'runtimeCategory':object, 'yearCategory':object}
-
-        title_basics = pd.read_csv(source_path,
-            usecols= column_list,
-            compression='zip',
-            sep= ',',
-            dtype=dict_types)
+        query = """ SELECT * FROM imdb_titlebasics LIMIT 100; """
+        df_imdb_titlebasics = pd.read_sql(query, engine)
 
         # Merge
-        imdb_content = title_basics
+        df_merged = df_imdb_titlebasics
 
 
         # Temporary : NANs clean-up
-        imdb_content = imdb_content.dropna(how='any', axis=0)
+        df_merged = df_merged.dropna(how='any', axis=0)
 
-        # Save
-        imdb_content.to_csv(destination_path, index=False, compression="zip")
 
-        print('merge done')
+        # SQL Table : creation if not existing
+        if not 'imdb_content' in inspector.get_table_names():
+            meta = MetaData()
+
+            imdb_content = Table(
+            'imdb_content', meta, 
+            Column('tconst', String(15), primary_key=True), 
+            Column('titleType', String(150)), 
+            Column('primaryTitle', String(150)),
+            Column('startYear', Integer),
+            Column('runtimeMinutes', Integer),
+            Column('genres',  String(150)),
+            Column('runtimeCategory',  String(2)),
+            Column('yearCategory',  String(2))
+            ) 
+
+            meta.create_all(engine)
+
+        # Store data in MySQL DB
+        df_merged.to_sql('imdb_content', engine, if_exists='replace', index=False)
+
+        conn.close()
+        print('merge_content done')
         return 0
 
-
-def feature_build(source_path, destination_path):
-        """
-        This function build the combined feature that will be used for cosine similarity
-        """
-
-        print('combined features started')
-
-        # Load
-        column_list = [
-            'tconst', 
-            'titleType', 
-            'primaryTitle', 
-            'startYear', 
-            'runtimeMinutes', 
-            'genres', 
-            'runtimeCategory', 
-            'yearCategory']
-        dict_types = {
-            'tconst':object, 
-            'titleType':object, 
-            'primaryTitle':object, 
-            'startYear':int, 
-            'runtimeMinutes':int, 
-            'genres':object, 
-            'runtimeCategory':object, 
-            'yearCategory':object
-            }
-
-        df = pd.read_csv(source_path,
-            usecols= column_list,
-            compression='zip',
-            sep= ',',
-            dtype=dict_types)
-
-
-        # Feature build
-        list_cols = ['primaryTitle','titleType', 'genres', 'runtimeCategory', 'yearCategory']
-        df['combined_features'] = df[list_cols].apply(lambda x: ' '.join(x), axis=1)
-
-        # Save
-        df.to_csv(destination_path, index=False, compression="zip")
-
-        print('combined features done')
-
-        return 0
 
 # -------------------------------------- #
 # TASKS
@@ -510,12 +491,6 @@ task9 = PythonOperator(
     dag=my_dag
 )
 
-task10 = PythonOperator(
-    task_id='feature_build',
-    python_callable=feature_build,
-    op_kwargs={'source_path':path_processed_data + processed_filenames[7], 'destination_path':path_processed_data + processed_filenames[8]},
-    dag=my_dag
-)
 
 
 # -------------------------------------- #
@@ -524,5 +499,5 @@ task10 = PythonOperator(
 
 task1 >> [task2, task3, task4, task5, task6, task7, task8]
 [task2, task3, task4, task5, task6, task7, task8] >> task9
-task9 >> task10
+
 
