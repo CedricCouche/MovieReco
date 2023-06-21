@@ -96,77 +96,79 @@ def cosine_similarity(top_n):
         inspector = inspect(engine)
 
         # Load
+        #query = """ SELECT * FROM imdb_content; """
         query = """ SELECT * FROM imdb_content LIMIT 10; """
-        df = pd.read_sql(query, engine)
+        df = pd.read_sql(sql=query, con=conn)
 
 
         # Feature build
         list_cols = ['primaryTitle','titleType', 'genres', 'runtimeCategory', 'yearCategory']
         df['combined_features'] = df[list_cols].apply(lambda x: ' '.join(x), axis=1)
 
-        df = df.drop(columns=list_cols, axis=1)
+        cols_to_drop = ['primaryTitle','titleType', 'genres', 'runtimeCategory', 'yearCategory', 'startYear', 'runtimeMinutes']
+        df = df.drop(columns=cols_to_drop, axis=1)
 
         # Tokenization
         cv = CountVectorizer()
         count_matrix = cv.fit_transform(df["combined_features"])
+        print(count_matrix.shape)
 
         # Initialisation of df_score
         df_score = pd.DataFrame(columns=['tconst','similar_movies'])
 
         # Loop : for each movie, we compute CS against all movies
-        for movie_index in range(len(df)):
-            print(movie_index)
-            # Limitation of the count_matrix to one movie
-            target_movie_id = df.iloc[movie_index]['tconst']
-            print(target_movie_id)
-            count_matrix_target = count_matrix[movie_index]
+        for index in range(len(df)):
+
+            target_movie_id = df.iloc[index]['tconst']
+            count_matrix_target = count_matrix[index]
+            print(count_matrix.shape)
 
             # Cosine Similarity computation
             cosine_sim = cosine_similarity(count_matrix, count_matrix_target)
+            print(cosine_sim.shape)
 
-            # Movie Recommandation
-            similar_movies = list(enumerate(cosine_sim))
-            sorted_similar_movies = sorted(similar_movies, key=lambda x:x[1], reverse=True)[:top_n]
+        #     # Movie Recommandation
+        #     similar_movies = list(enumerate(cosine_sim))
+        #     sorted_similar_movies = sorted(similar_movies, key=lambda x:x[1], reverse=True)[:top_n]
+        #     print(sorted_similar_movies)
 
-            list_index = []
-            for e in range(len(sorted_similar_movies)):
-                movie_index = sorted_similar_movies[e][0]
-                list_index.append(movie_index)
+        #     list_index = []
+        #     for e in range(len(sorted_similar_movies)):
+        #         movie_index = sorted_similar_movies[e][0]
+        #         list_index.append(movie_index)
             
-            # Retrieve info on recommended movies
-            list_titles = df.iloc[list_index]['tconst'].tolist()
-            # movie_reco = df.iloc[list_index]
-            # list_titles = movie_reco['tconst'].tolist()
-            print(list_titles)
+        #     # Retrieve info on recommended movies
+        #     list_titles = df.iloc[list_index]['tconst'].tolist()
+        #     # movie_reco = df.iloc[list_index]
+        #     # list_titles = movie_reco['tconst'].tolist()
+        #     print(list_titles)
 
-            df_movie = pd.DataFrame()
-            df_movie['tconst'] = target_movie_id
-            df_movie['similar_movies']= list_titles
+        #     df_movie = pd.DataFrame()
+        #     df_movie['tconst'] = target_movie_id
+        #     df_movie['similar_movies']= list_titles
 
-            df_score = pd.concat([df_score, df_movie])
+        #     df_score = pd.concat([df_score, df_movie])
 
 
-        # SQL Table : creation if not existing
-        if not 'score_cs' in inspector.get_table_names():
-            meta = MetaData()
+        # # SQL Table : creation if not existing
+        # if not 'score_cs' in inspector.get_table_names():
+        #     meta = MetaData()
 
-            score_cs = Table(
-            'score_cs', meta, 
-            Column('tconst', String(15), primary_key=True), 
-            Column('similar_movies', String(255))
-            ) 
+        #     score_cs = Table(
+        #     'score_cs', meta, 
+        #     Column('tconst', String(15), primary_key=True), 
+        #     Column('similar_movies', String(255))
+        #     ) 
 
-            meta.create_all(engine)
+        #     meta.create_all(engine)
 
-        # Store data in MySQL DB
-        df_score.to_sql('score_cs', engine, if_exists='replace', index=False)
+        # # Store data in MySQL DB
+        # df_score.to_sql('score_cs', engine, if_exists='replace', index=False)
 
+        conn.close()
         engine.dispose()
 
         print('cosine_similarity done')
-
-        conn.close()
-
         return 0
 
 

@@ -72,15 +72,26 @@ def cosine_similarity(top_n):
 
 
         # Load
-        query = """ SELECT * FROM imdb_content LIMIT 10; """
-        df = pd.read_sql(query, engine)
+        query = """ SELECT * FROM imdb_content LIMIT 100; """
+        df = pd.read_sql(sql=query, con=conn)
+        print(df.shape)
+
+        # Test load
+        # stmt = text("SELECT * FROM imdb_content LIMIT 10;")
+        # result = conn.execute(stmt)
+        # result = result.fetchall()
+        # df2 = pd.DataFrame(result)
+        # print('df2 cols = ', df2.columns)
+        # print('df2 shape = ', df2.shape)
 
 
         # Feature build
         list_cols = ['primaryTitle','titleType', 'genres', 'runtimeCategory', 'yearCategory']
         df['combined_features'] = df[list_cols].apply(lambda x: ' '.join(x), axis=1)
 
-        df = df.drop(columns=list_cols, axis=1)
+        #cols_to_drop = ['primaryTitle','titleType', 'genres', 'runtimeCategory', 'yearCategory', 'startYear', 'runtimeMinutes']
+        #df = df.drop(columns=cols_to_drop, axis=1)
+        #print(df.columns)
 
         # Tokenization
         cv = CountVectorizer()
@@ -141,6 +152,7 @@ def cosine_similarity(top_n):
 
 
         conn.close()
+        engine.dispose()
 
         print('cosine_similarity done')
 
