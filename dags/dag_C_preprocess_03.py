@@ -169,12 +169,6 @@ def process_title_basics(source_path, destination_path):
         df['yearCategory'] = df['yearCategory'].astype(str)
 
 
-        # Save in CSV
-        #df.to_csv(destination_path, index=False, compression="zip")
-
-        print('process done')
-
-
         # Connection to MySQL
         connection_url = 'mysql://{user}:{password}@{url}/{database}'.format(
             user=mysql_user,
@@ -185,43 +179,40 @@ def process_title_basics(source_path, destination_path):
 
         engine = create_engine(connection_url)
         conn = engine.connect()
-        inspector = inspect(engine)
+        # inspector = inspect(engine)
 
-        # SQL Table : creation if not existing
-        if not 'imdb_titlebasics' in inspector.get_table_names():
-            meta = MetaData()
+        # # SQL Table : creation if not existing
+        # if not 'imdb_titlebasics' in inspector.get_table_names():
+        #     meta = MetaData()
 
-            imdb_titlebasics = Table(
-            'imdb_titlebasics', meta, 
-            Column('tconst', String(15), primary_key=True), 
-            Column('titleType', String(150)), 
-            Column('primaryTitle', String(150)),
-            Column('startYear', Integer),
-            Column('runtimeMinutes', Integer),
-            Column('genres',  String(150)),
-            Column('runtimeCategory',  String(2)),
-            Column('yearCategory',  String(2))
-            ) 
+        #     imdb_titlebasics = Table(
+        #     'imdb_titlebasics', meta, 
+        #     Column('tconst', String(15), primary_key=True), 
+        #     Column('titleType', String(150)), 
+        #     Column('primaryTitle', String(150)),
+        #     Column('startYear', Integer),
+        #     Column('runtimeMinutes', Integer),
+        #     Column('genres',  String(150)),
+        #     Column('runtimeCategory',  String(2)),
+        #     Column('yearCategory',  String(2))
+        #     ) 
 
-            meta.create_all(engine)
+        #     meta.create_all(engine)
 
 
         # Store data in MySQL DB
         df.to_sql('imdb_titlebasics', engine, if_exists='replace', index=False)
 
+        # Save in CSV
+        df.to_csv(destination_path, index=False, compression="zip")
 
-        # check
-        # query = """ SELECT * FROM imdb_titlebasics LIMIT 5; """
-        # df_check = pd.read_sql(query, engine)
-        # print(df_check.head(5))
-        # df_check  = pd.DataFrame()
-        # del df_check
 
         # Deletion of df to save memory
         df = pd.DataFrame()
         del df
 
         conn.close()
+        engine.dispose()
         print('process_title_basics done')
 
         return 0
@@ -350,7 +341,6 @@ def process_title_crew(source_path, destination_path):
 
         conn.close()
         engine.dispose()
-
         print('process done')
 
         return 0
@@ -453,37 +443,45 @@ def merge_content(source_path, destination_path):
         inspector = inspect(engine)
 
         # Load
-        query = """ SELECT * FROM imdb_titlebasics LIMIT 100; """
+        query = """ SELECT * FROM imdb_titlebasics LIMIT 1000; """
         df_imdb_titlebasics = pd.read_sql(query, engine)
 
-        # Merge
-        df_merged = df_imdb_titlebasics
+        query = """ SELECT * FROM imdb_titlecrew LIMIT 1000; """
+        df_imdb_titlecrew = pd.read_sql(query, engine)
 
+
+        # Merge
+        #df_merged = df_imdb_titlebasics.merge(right=df_imdb_titlecrew, left_on='tconst', right_on='tconst', how='inner')
+
+        df_merged = df_imdb_titlebasics
 
         # Temporary : NANs clean-up
         df_merged = df_merged.dropna(how='any', axis=0)
 
 
-        # SQL Table : creation if not existing
-        if not 'imdb_content' in inspector.get_table_names():
-            meta = MetaData()
+        # # SQL Table : creation if not existing
+        # if not 'imdb_content' in inspector.get_table_names():
+        #     meta = MetaData()
 
-            imdb_content = Table(
-            'imdb_content', meta, 
-            Column('tconst', String(15), primary_key=True), 
-            Column('titleType', String(150)), 
-            Column('primaryTitle', String(150)),
-            Column('startYear', Integer),
-            Column('runtimeMinutes', Integer),
-            Column('genres',  String(150)),
-            Column('runtimeCategory',  String(2)),
-            Column('yearCategory',  String(2))
-            ) 
+        #     imdb_content = Table(
+        #     'imdb_content', meta, 
+        #     Column('tconst', String(15), primary_key=True), 
+        #     Column('titleType', String(150)), 
+        #     Column('primaryTitle', String(150)),
+        #     Column('startYear', Integer),
+        #     Column('runtimeMinutes', Integer),
+        #     Column('genres',  String(150)),
+        #     Column('runtimeCategory',  String(2)),
+        #     Column('yearCategory',  String(2))
+        #     ) 
 
-            meta.create_all(engine)
+        #     meta.create_all(engine)
 
         # Store data in MySQL DB
         df_merged.to_sql('imdb_content', engine, if_exists='replace', index=False)
+
+        # Save in CSV
+        df_merged.to_csv('/app/processed_data/imdb_content.csv.zip', index=False, compression="zip")
 
         conn.close()
         engine.dispose()
