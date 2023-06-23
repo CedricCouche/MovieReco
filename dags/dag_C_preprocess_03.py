@@ -15,7 +15,8 @@ import numpy as np
 import string
 
 import sqlalchemy
-from sqlalchemy import Table, Column, Integer, String, ForeignKey, MetaData, create_engine, text, inspect
+from sqlalchemy import create_engine, inspect
+from sqlalchemy import Table, Column, Integer, String, ForeignKey, MetaData, text 
 from sqlalchemy_utils import database_exists, create_database
 
 
@@ -84,7 +85,7 @@ def download():
     return 0
 
 
-def process_title_basics(source_path, destination_path):
+def process_title_basics(source_path):
         """
         This function clean the file title_basics, discretise some fields and reduce the size of the dataset
 
@@ -137,7 +138,7 @@ def process_title_basics(source_path, destination_path):
 
 
         # Limitation of the data set size
-        df = df[df['startYear']>2010.0]
+        df = df[df['startYear']>2018.0]
         df = df[df['titleType']=='movie']
         df = df[df['isAdult']==0]
 
@@ -204,7 +205,7 @@ def process_title_basics(source_path, destination_path):
         df.to_sql('imdb_titlebasics', engine, if_exists='replace', index=False)
 
         # Save in CSV
-        df.to_csv(destination_path, index=False, compression="zip")
+        # df.to_csv(destination_path, index=False, compression="zip")
 
 
         # Deletion of df to save memory
@@ -218,7 +219,7 @@ def process_title_basics(source_path, destination_path):
         return 0
 
 
-def process_name_basics(source_path, destination_path):
+def process_name_basics(source_path):
         # """
         # description
         # """
@@ -243,7 +244,7 @@ def process_name_basics(source_path, destination_path):
         return 0
 
 
-def process_title_akas(source_path, destination_path):
+def process_title_akas(source_path):
         # """
         # description
         # """
@@ -269,7 +270,7 @@ def process_title_akas(source_path, destination_path):
         return 0
 
 
-def process_title_crew(source_path, destination_path):
+def process_title_crew(source_path):
         """
         description : load & pre-process data
 
@@ -346,7 +347,7 @@ def process_title_crew(source_path, destination_path):
         return 0
 
 
-def process_title_episode(source_path, destination_path):
+def process_title_episode(source_path):
         # """
         # description
         # """
@@ -372,7 +373,7 @@ def process_title_episode(source_path, destination_path):
         return 0
 
 
-def process_title_principal(source_path, destination_path):
+def process_title_principal(source_path):
         # """
         # description
         # """
@@ -398,7 +399,7 @@ def process_title_principal(source_path, destination_path):
         return 0
 
 
-def process_title_rating(source_path, destination_path):
+def process_title_rating(source_path):
         # """
         # description
         # """
@@ -424,7 +425,7 @@ def process_title_rating(source_path, destination_path):
         return 0
 
 
-def merge_content(source_path, destination_path):
+def merge_content(source_path):
         """
         Merge of processed tables
         """
@@ -443,17 +444,16 @@ def merge_content(source_path, destination_path):
         inspector = inspect(engine)
 
         # Load
-        query = """ SELECT * FROM imdb_titlebasics LIMIT 1000; """
+        query = """ SELECT * FROM imdb_titlebasics; """
         df_imdb_titlebasics = pd.read_sql(query, engine)
 
-        query = """ SELECT * FROM imdb_titlecrew LIMIT 1000; """
+        query = """ SELECT * FROM imdb_titlecrew; """
         df_imdb_titlecrew = pd.read_sql(query, engine)
 
 
         # Merge
-        #df_merged = df_imdb_titlebasics.merge(right=df_imdb_titlecrew, left_on='tconst', right_on='tconst', how='inner')
-
-        df_merged = df_imdb_titlebasics
+        df_merged = df_imdb_titlebasics.merge(right=df_imdb_titlecrew, left_on='tconst', right_on='tconst', how='inner')
+        #df_merged = df_imdb_titlebasics
 
         # Temporary : NANs clean-up
         df_merged = df_merged.dropna(how='any', axis=0)
@@ -477,10 +477,10 @@ def merge_content(source_path, destination_path):
 
         #     meta.create_all(engine)
 
-        # Store data in MySQL DB
+        # Store in MySQL DB
         df_merged.to_sql('imdb_content', engine, if_exists='replace', index=False)
 
-        # Save in CSV
+        # Save Local
         df_merged.to_csv('/app/processed_data/imdb_content.csv.zip', index=False, compression="zip")
 
         conn.close()
@@ -502,56 +502,56 @@ task1 = PythonOperator(
 task2 = PythonOperator(
     task_id='process_title_basics',
     python_callable=process_title_basics,
-    op_kwargs={'source_path':path_raw_data + imdb_files_names[0], 'destination_path':path_processed_data + processed_filenames[0]},
+    op_kwargs={'source_path':path_raw_data + imdb_files_names[0]},
     dag=my_dag
 )
 
 task3 = PythonOperator(
     task_id='process_name_basics',
     python_callable=process_name_basics,
-    op_kwargs={'source_path':path_raw_data + imdb_files_names[1], 'destination_path':path_processed_data + processed_filenames[1]},
+    op_kwargs={'source_path':path_raw_data + imdb_files_names[1]},
     dag=my_dag
 )
 
 task4 = PythonOperator(
     task_id='process_title_akas',
     python_callable=process_title_akas,
-    op_kwargs={'source_path':path_raw_data + imdb_files_names[2], 'destination_path':path_processed_data + processed_filenames[2]},
+    op_kwargs={'source_path':path_raw_data + imdb_files_names[2]},
     dag=my_dag
 )
 
 task5 = PythonOperator(
     task_id='process_title_crew',
     python_callable=process_title_crew,
-    op_kwargs={'source_path':path_raw_data + imdb_files_names[3], 'destination_path':path_processed_data + processed_filenames[3]},
+    op_kwargs={'source_path':path_raw_data + imdb_files_names[3]},
     dag=my_dag
 )
 
 task6 = PythonOperator(
     task_id='process_title_episode',
     python_callable=process_title_episode,
-    op_kwargs={'source_path':path_raw_data + imdb_files_names[4], 'destination_path':path_processed_data + processed_filenames[4]},
+    op_kwargs={'source_path':path_raw_data + imdb_files_names[4]},
     dag=my_dag
 )
 
 task7 = PythonOperator(
     task_id='process_title_principal',
     python_callable=process_title_principal,
-    op_kwargs={'source_path':path_raw_data + imdb_files_names[5], 'destination_path':path_processed_data + processed_filenames[5]},
+    op_kwargs={'source_path':path_raw_data + imdb_files_names[5]},
     dag=my_dag
 )
 
 task8 = PythonOperator(
     task_id='process_title_rating',
     python_callable=process_title_rating,
-    op_kwargs={'source_path':path_raw_data + imdb_files_names[6], 'destination_path':path_processed_data + processed_filenames[6]},
+    op_kwargs={'source_path':path_raw_data + imdb_files_names[6]},
     dag=my_dag
 )
 
 task9 = PythonOperator(
     task_id='merge_content',
     python_callable=merge_content,
-    op_kwargs={'source_path':path_processed_data + processed_filenames[0], 'destination_path':path_processed_data + processed_filenames[7]},
+    op_kwargs={'source_path':path_processed_data + processed_filenames[0]},
     trigger_rule=TriggerRule.ALL_DONE,
     dag=my_dag
 )
