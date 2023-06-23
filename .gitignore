@@ -4,10 +4,12 @@
 # Folder exclusion
 .venv/*
 work-in-progress
+dags_graveyard
 api_logs/*
 logs/*
 raw_data/*
 processed_data/*
+
 
 work_airflow/*
 model_cosine-similarity/*
