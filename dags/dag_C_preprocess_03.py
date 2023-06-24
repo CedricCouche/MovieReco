@@ -28,7 +28,7 @@ my_dag = DAG(
     dag_id='download_C03',
     description='download_C03',
     tags=['download', 'Pre-Process', 'Process_C'],
-    schedule_interval=datetime.timedelta(minutes=30),
+    schedule_interval=datetime.timedelta(hours=12),
     default_args={
         'owner': 'airflow',
         'start_date': days_ago(0, minute=1),
@@ -138,7 +138,7 @@ def process_title_basics(source_path):
 
 
         # Limitation of the data set size
-        df = df[df['startYear']>2018.0]
+        df = df[df['startYear']>2000.0]
         df = df[df['titleType']=='movie']
         df = df[df['isAdult']==0]
 
@@ -212,6 +212,7 @@ def process_title_basics(source_path):
         df = pd.DataFrame()
         del df
 
+        # Closing MySQL connection
         conn.close()
         engine.dispose()
         print('process_title_basics done')
@@ -220,26 +221,64 @@ def process_title_basics(source_path):
 
 
 def process_name_basics(source_path):
-        # """
-        # description
-        # """
-        # print('process started')
+        """
+        description
 
-        # # Load
-        # df = pd.read_csv(source_path,
-        #             compression='gzip', 
-        #             sep='\t', 
-        #             na_values=['\\N', 'nan', 'NA', ' nan','  nan', '   nan']
-        #             ) 
+        Original fields from imdb : 
+            - nconst (string) - alphanumeric unique identifier of the name/person
+            - primaryName (string)– name by which the person is most often credited
+            - birthYear – in YYYY format
+            - deathYear – in YYYY format if applicable, else '\\N'
+            - primaryProfession (array of strings)– the top-3 professions of the person
+            - knownForTitles (array of tconsts) – titles the person is known for
+        """
+         
+        print('process started')
 
-        # # Save
-        # df.to_csv(destination_path, index=False, compression="zip")
+        # Connection to MySQL
+        connection_url = 'mysql://{user}:{password}@{url}/{database}'.format(
+            user=mysql_user,
+            password=mysql_password,
+            url=mysql_url,
+            database = database_name
+            )
 
-        # # Deletion of df to save memory
-        # df = pd.DataFrame()
-        # del df
+        engine = create_engine(connection_url)
+        conn = engine.connect()
+        inspector = inspect(engine)
 
-        # print('process done')
+
+        # Load
+        df = pd.read_csv(source_path,
+                    compression='gzip', 
+                    sep='\t', 
+                    na_values=['\\N', 'nan', 'NA', ' nan','  nan', '   nan']
+                    ) 
+
+        print('original columns : ', df.columns)
+        print('Number of persons: ', df.shape[0])
+
+        # Limitation of existing films in title basics
+        # df = df[df['tconst'].isin(list_movies)]
+        # Filtrage sur la deathyear ?
+        df = df[['nconst', 'primaryName']]
+
+        # Clean-up
+        
+
+        # Store data in MySQL DB
+        df.to_sql('imdb_namebasics', engine, if_exists='replace', index=False)
+
+        # Deletion of df to save memory
+        df = pd.DataFrame()
+        df_existing_tconst = pd.DataFrame()
+        del df
+        del df_existing_tconst
+
+        # Closing MySQL connection
+        conn.close()
+        engine.dispose()
+        print('process done')
 
         return 0
 
@@ -318,19 +357,6 @@ def process_title_crew(source_path):
         # Clean-up
         
 
-        # # SQL Table : creation if not existing
-        # if not 'imdb_titlecrew' in inspector.get_table_names():
-        #     meta = MetaData()
-
-        #     imdb_titlecrew = Table(
-        #     'imdb_titlecrew', meta, 
-        #     Column('tconst', String(15), primary_key=True), 
-        #     Column('directors_id', String(255)), 
-        #     Column('writers_id', String(255))
-        #     ) 
-        #     meta.create_all(engine)
-
-
         # Store data in MySQL DB
         df.to_sql('imdb_titlecrew', engine, if_exists='replace', index=False)
 
@@ -340,6 +366,7 @@ def process_title_crew(source_path):
         del df
         del df_existing_tconst
 
+        # Closing MySQL connection
         conn.close()
         engine.dispose()
         print('process done')
@@ -400,26 +427,63 @@ def process_title_principal(source_path):
 
 
 def process_title_rating(source_path):
-        # """
-        # description
-        # """
-        # print('process started')
+        """
+        description
+        
+        Original fields from imdb : 
+            tconst (string) - alphanumeric unique identifier of the title
+            averageRating – weighted average of all the individual user ratings
+            numVotes - number of votes the title has received
 
-        # # Load
-        # df = pd.read_csv(source_path,
-        #             compression='gzip', 
-        #             sep='\t', 
-        #             na_values=['\\N', 'nan', 'NA', ' nan','  nan', '   nan']
-        #             ) 
+        """
+        print('process started')
 
-        # # Save
-        # df.to_csv(destination_path, index=False, compression="zip")
+        # Connection to MySQL
+        connection_url = 'mysql://{user}:{password}@{url}/{database}'.format(
+            user=mysql_user,
+            password=mysql_password,
+            url=mysql_url,
+            database = database_name
+            )
 
-        # # Deletion of df to save memory
-        # df = pd.DataFrame()
-        # del df
+        engine = create_engine(connection_url)
+        conn = engine.connect()
+        inspector = inspect(engine)
 
-        # print('process done')
+        # Load
+        query = """ SELECT tconst FROM imdb_titlebasics; """
+        df_existing_tconst = pd.read_sql(query, engine)
+        list_movies = df_existing_tconst['tconst'].tolist()
+        
+        print('len list_movies:', len(list_movies))
+
+        # Load
+        df = pd.read_csv(source_path,
+                    compression='gzip', 
+                    sep='\t', 
+                    na_values=['\\N', 'nan', 'NA', ' nan','  nan', '   nan']
+                    ) 
+
+
+        # Limitation of existing films in title basics
+        df = df[df['tconst'].isin(list_movies)]
+
+        # Clean-up
+        
+
+        # Store data in MySQL DB
+        df.to_sql('imdb_titleratings', engine, if_exists='replace', index=False)
+
+        # Deletion of df to save memory
+        df = pd.DataFrame()
+        df_existing_tconst = pd.DataFrame()
+        del df
+        del df_existing_tconst
+
+        # Closing MySQL connection
+        conn.close()
+        engine.dispose()
+        print('process done')
 
 
         return 0
@@ -441,7 +505,7 @@ def merge_content(source_path):
 
         engine = create_engine(connection_url)
         conn = engine.connect()
-        inspector = inspect(engine)
+
 
         # Load
         query = """ SELECT * FROM imdb_titlebasics; """
@@ -450,16 +514,20 @@ def merge_content(source_path):
         query = """ SELECT * FROM imdb_titlecrew; """
         df_imdb_titlecrew = pd.read_sql(query, engine)
 
+        query = """ SELECT * FROM imdb_titleratings; """
+        df_imdb_titleratings = pd.read_sql(query, engine)
 
         # Merge
-        df_merged = df_imdb_titlebasics.merge(right=df_imdb_titlecrew, left_on='tconst', right_on='tconst', how='inner')
-        #df_merged = df_imdb_titlebasics
+        df_imdb_content = df_imdb_titlebasics.merge(right=df_imdb_titlecrew, left_on='tconst', right_on='tconst', how='inner')
+        df_imdb_content = df_imdb_content.merge(right=df_imdb_titleratings, left_on='tconst', right_on='tconst', how='inner')
 
         # Temporary : NANs clean-up
-        df_merged = df_merged.dropna(how='any', axis=0)
+        df_imdb_content = df_imdb_content.dropna(how='any', axis=0)
 
 
         # # SQL Table : creation if not existing
+        # inspector = inspect(engine)
+
         # if not 'imdb_content' in inspector.get_table_names():
         #     meta = MetaData()
 
@@ -478,14 +546,27 @@ def merge_content(source_path):
         #     meta.create_all(engine)
 
         # Store in MySQL DB
-        df_merged.to_sql('imdb_content', engine, if_exists='replace', index=False)
+        df_imdb_content.to_sql('imdb_content', engine, if_exists='replace', index=False)
 
-        # Save Local
-        df_merged.to_csv('/app/processed_data/imdb_content.csv.zip', index=False, compression="zip")
+        # Save Local (For testing purpose)
+        df_imdb_content.to_csv('/app/processed_data/imdb_content.csv.zip', index=False, compression="zip")
 
+        # Deletion of df to save memory
+        df_imdb_titlebasics = pd.DataFrame()
+        del df_imdb_titlebasics
+        df_imdb_titlecrew= pd.DataFrame()
+        del df_imdb_titlecrew
+        df_imdb_titleratings= pd.DataFrame()
+        del df_imdb_titleratings
+        df_imdb_content = pd.DataFrame()
+        del df_imdb_content
+
+        # Closing MySQL connection
         conn.close()
         engine.dispose()
+
         print('merge_content done')
+        
         return 0
 
 

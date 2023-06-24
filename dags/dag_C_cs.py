@@ -31,7 +31,7 @@ my_dag = DAG(
     dag_id='cosine-similarity',
     description='cosine-similarity',
     tags=['model', 'Process_C'],
-    schedule_interval=datetime.timedelta(minutes=30),
+    schedule_interval=datetime.timedelta(hours=12),
     default_args={
         'owner': 'airflow',
         'start_date': days_ago(0, minute=1),
@@ -75,7 +75,7 @@ def cosine_similarity_A(top_n):
         inspector = inspect(engine)
 
         # Load
-        query = """ SELECT * FROM imdb_content; """
+        query = """ SELECT * FROM imdb_content LIMIT 1000; """
         df = pd.read_sql(sql=query, con=conn)
 
 
