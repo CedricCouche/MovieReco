@@ -105,11 +105,13 @@ services:
     environment:
       API_KEY: "Admin"
       API_KEY_NAME: "Admin"
+      MYSQL_URL: 'container_mysql:3306'
       MYSQL_ROOT_PASSWORD: "my-secret-pw"
       MYSQL_DATABASE: "db_movie"
       MYSQL_USER: 'root'
       MYSQL_TABLE_USERS: 'Users'
       MYSQL_TABLE_MOVIES: 'table_api'
+      MYSQL_TABLE_CS: 'table_cs'
       LOG: 1
     volumes:
       - /app/api_logs:/home/ubuntu/log
