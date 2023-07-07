@@ -1,4 +1,4 @@
-FROM debian:latest
+FROM debian:11
 
 RUN apt-get update && apt-get install -y \
     python3 \
@@ -21,5 +21,5 @@ RUN pip3 install requests \
 EXPOSE 8000
 WORKDIR /home
 RUN mkdir log data
-ADD api_moviereco_A.py ./
-CMD uvicorn api_moviereco_A:api --host 0.0.0.0
+ADD api_moviereco_B.py ./
+CMD uvicorn api_moviereco_B:api --host 0.0.0.0

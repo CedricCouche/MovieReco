@@ -25,12 +25,14 @@ from sqlalchemy_utils import database_exists, create_database
 # ---------- MySQL Connection ---------- #
 
 
-mysql_url = 'container_mysql:3306'
+#mysql_url = 'container_mysql:3306'
+mysql_url = os.environ.get('MYSQL_URL')
 mysql_user = os.environ.get('MYSQL_USER')
 mysql_password = os.environ.get('MYSQL_ROOT_PASSWORD')
 database_name = os.environ.get('MYSQL_DATABASE')
 table_users = os.environ.get('MYSQL_TABLE_USERS')
-table_movies =  os.environ.get('MYSQL_TABLE_MOVIES')
+table_movies = os.environ.get('MYSQL_TABLE_MOVIES')
+table_cs = os.environ.get('MYSQL_TABLE_CS')
 
 
 # Creating the URL connection
