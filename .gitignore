@@ -9,6 +9,7 @@ api_logs/*
 logs/*
 raw_data/*
 processed_data/*
+db_dump_temp
 
 
 work_airflow/*
@@ -25,3 +26,5 @@ Utils/*
 !raw_data/.gitkeep 
 !processed_data/.gitkeep 
 
+# File keep
+!.python-version
