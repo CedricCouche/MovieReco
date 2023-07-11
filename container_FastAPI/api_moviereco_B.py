@@ -32,7 +32,7 @@ mysql_password = os.environ.get('MYSQL_ROOT_PASSWORD')
 database_name = os.environ.get('MYSQL_DATABASE')
 table_users = os.environ.get('MYSQL_TABLE_USERS')
 table_movies = os.environ.get('MYSQL_TABLE_MOVIES')
-table_cs = os.environ.get('MYSQL_TABLE_CS')
+table_recocs = os.environ.get('MYSQL_TABLE_CS')
 
 
 # Creating the URL connection
@@ -85,7 +85,34 @@ class Movie(BaseModel):
     genres: str
     runtimeCategory: str
     yearCategory: str
-    combined_features: str
+    directors_id: str
+    writers_id: str
+    averageRating: str
+    numVotes: str
+
+class RecoCS(BaseModel):
+    tconst: str
+    top1: str
+    top2: str
+    top3: str
+    top4: str
+    top5: str
+    top6: str
+    top7: str
+    top8: str
+    top9: str
+    top10: str
+    score1: int
+    score2: int
+    score3: int
+    score4: int
+    score5: int
+    score6: int
+    score7: int
+    score8: int
+    score9: int
+    score10: int
+
 
 
 # ---------- API INITIALISATION ---------- #
@@ -94,7 +121,7 @@ class Movie(BaseModel):
 api = FastAPI(
     title="Movie recommendation",
     description="Content based Movie recommendation",
-    version="1.5.9",
+    version="1.6.1",
     openapi_tags=[
               {'name':'Info', 'description':'Info'},
               {'name':'MovieReco','description':'Get recommendation'}, 
@@ -129,7 +156,7 @@ async def get_users():
     # Creating MySQL connection
     engine = create_engine(connection_url, echo=True)
     conn = engine.connect()
-    inspector = inspect(engine)
+    #inspector = inspect(engine)
 
 
     stmt = 'SELECT * FROM {table};'.format(table=table_users)
@@ -163,7 +190,7 @@ async def list_genres(tconst):
     # Creating MySQL connection
     engine = create_engine(connection_url, echo=True)
     conn = engine.connect()
-    inspector = inspect(engine)
+    #inspector = inspect(engine)
 
 
     stmt = 'SELECT * FROM {table} WHERE tconst = {tconst};'.format(table=table_movies, tconst=tconst)
@@ -181,10 +208,18 @@ async def list_genres(tconst):
             genres=i[5],
             runtimeCategory=i[6],
             yearCategory=i[7],
-            combined_features=i[8]
+            directors_id=i[8],
+            writers_id=i[9],
+            averageRating=i[10],
+            numVotes=i[11]
             ) for i in results.fetchall()]
 
     if len(results) == 0:
+        # Closing MySQL connection
+        conn.close()
+        engine.dispose()
+
+        # Error handling
         raise HTTPException(
             status_code=404,
             detail='Unknown movie')
@@ -202,9 +237,58 @@ async def get_recommendation(movie_user_title:str):
     Return a list of similar movies
     """
 
-    list_titles = ['good', 'bad', 'ugly']
+    # Creating MySQL connection
+    engine = create_engine(connection_url, echo=True)
+    conn = engine.connect()
+    #inspector = inspect(engine)
 
-    return list_titles
+
+    stmt = 'SELECT * FROM {table} WHERE tconst = {tconst};'.format(table=table_recocs, tconst=movie_user_title)
+
+    with engine.connect() as connection:
+        results = connection.execute(text(stmt))
+
+    results = [
+        RecoCS(
+            tconst=i[0],
+            tconst=i[1],
+            top1=i[2],
+            top2=i[3],
+            top3=i[4],
+            top4=i[5],
+            top5=i[6],
+            top6=i[7],
+            top7=i[8],
+            top8=i[9],
+            top9=i[10],
+            top10=i[11],
+            score1=i[12],
+            score2=i[13],
+            score3=i[14],
+            score4=i[15],
+            score5=i[16],
+            score6=i[17],
+            score7=i[18],
+            score8=i[19],
+            score9=i[20],
+            score10=i[21]
+            ) for i in results.fetchall()]
+
+    if len(results) == 0:
+        # Closing MySQL connection
+        conn.close()
+        engine.dispose()
+
+        # Error handling
+        raise HTTPException(
+            status_code=404,
+            detail='Unknown movie')
+    else:
+        # Closing MySQL connection
+        conn.close()
+        engine.dispose()
+                
+        return results[0]
 
 
 
@@ -216,7 +300,7 @@ async def list_films(number:int):
     # Creating MySQL connection
     engine = create_engine(connection_url, echo=True)
     conn = engine.connect()
-    inspector = inspect(engine)
+    #inspector = inspect(engine)
 
     stmt = 'SELECT * FROM {table} LIMIT {number};'.format(table=table_movies, number=number)
 
@@ -233,10 +317,13 @@ async def list_films(number:int):
             genres=i[5],
             runtimeCategory=i[6],
             yearCategory=i[7],
-            combined_features=i[8]
+            directors_id=i[8],
+            writers_id=i[9],
+            averageRating=i[10],
+            numVotes=i[11]
             ) for i in results.fetchall()]
 
-    
+
     # Closing MySQL connection
     conn.close()
     engine.dispose()
