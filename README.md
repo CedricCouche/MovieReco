@@ -99,13 +99,14 @@ sudo docker-compose up -d
 
 #### SSH Tunnel initialisation
 
-Airflow interface will be available on port 8080
-FastAPI is available on port 8000
-Streamlit App is available on port 8501
+- Airflow interface will be available on port 8080
+- FastAPI is available on port 8000
+- Streamlit App is available on port 8501
 
 Tunnel SSH initialisation :
 ``` bash
-ssh -i "your_key.pem" -L 8000:localhost:8000 -L 8080:localhost:8080 -L 8501:localhost:8501 ubuntu@your-ip-address
+# From your local machine :
+ssh -i "your_key.pem" -L 8000:localhost:8000 -L 8080:localhost:8080 -L 8501:localhost:8501 user@server-ip-address
 
 ```
 
@@ -113,6 +114,15 @@ ssh -i "your_key.pem" -L 8000:localhost:8000 -L 8080:localhost:8080 -L 8501:loca
 
 login: airflow
 password: airflow
+
+#### Airflow variables
+
+In Airflow web-interface, go in menu Admin > Variables
+Import the file dag_variables.json
+
+
+
+## To be discarded : 
 
 #### MySQL connection setup
 
