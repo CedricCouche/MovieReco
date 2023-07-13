@@ -50,10 +50,15 @@ my_dag = DAG(
 # -------------------------------------- #
 
 
-mysql_url = 'container_mysql:3306'
-mysql_user = 'root'
-mysql_password = 'my-secret-pw'
-database_name = 'db_movie'
+# mysql_url = 'container_mysql:3306'
+# mysql_user = 'root'
+# mysql_password = 'my-secret-pw'
+# database_name = 'db_movie'
+
+mysql_url       = Variable.get("mysql_url")
+mysql_user      = Variable.get("mysql_user")
+mysql_password  = Variable.get("mysql_pw")
+database_name   = Variable.get("database_name")
 
 
 # -------------------------------------- #

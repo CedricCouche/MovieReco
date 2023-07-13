@@ -25,9 +25,9 @@ from sqlalchemy_utils import database_exists, create_database
 # -------------------------------------- #
 
 my_dag = DAG(
-    dag_id='download_C03',
-    description='download_C03',
-    tags=['download', 'Pre-Process', 'Process_C'],
+    dag_id='Preprocess_D01',
+    description='Preprocess',
+    tags=['Pre-Process', 'Process_D'],
     schedule_interval=datetime.timedelta(hours=12),
     default_args={
         'owner': 'airflow',
@@ -41,49 +41,53 @@ my_dag = DAG(
 # -------------------------------------- #
 
 
-imdb_base_url =  'https://datasets.imdbws.com/'
-imdb_files_names = ['title.basics.tsv.gz', 
-                    'name.basics.tsv.gz', 
-                    'title.akas.tsv.gz', 
-                    'title.crew.tsv.gz', 
-                    'title.episode.tsv.gz', 
-                    'title.principals.tsv.gz', 
-                    'title.ratings.tsv.gz']
+# imdb_base_url =  'https://datasets.imdbws.com/'
+# imdb_files_names = ['title.basics.tsv.gz', 
+#                     'name.basics.tsv.gz', 
+#                     'title.akas.tsv.gz', 
+#                     'title.crew.tsv.gz', 
+#                     'title.episode.tsv.gz', 
+#                     'title.principals.tsv.gz', 
+#                     'title.ratings.tsv.gz']
 
 
-processed_filenames = ['title_basics.csv.zip', 
-                    'name_basics.csv.zip', 
-                    'title_akas.csv.zip', 
-                    'title_crew.csv.zip', 
-                    'title_episode.csv.zip', 
-                    'title_principals.csv.zip', 
-                    'title_ratings.csv.zip',
-                    'merged_content.csv.zip',
-                    'api_table.csv.zip']
+# processed_filenames = ['title_basics.csv.zip', 
+#                     'name_basics.csv.zip', 
+#                     'title_akas.csv.zip', 
+#                     'title_crew.csv.zip', 
+#                     'title_episode.csv.zip', 
+#                     'title_principals.csv.zip', 
+#                     'title_ratings.csv.zip',
+#                     'merged_content.csv.zip',
+#                     'api_table.csv.zip']
 
-path_raw_data = '/app/raw_data/'
-path_processed_data = '/app/processed_data/'
-path_reco_data = '/app/reco_data/'
+# path_raw_data = '/app/raw_data/'
+# path_processed_data = '/app/processed_data/'
+# path_reco_data = '/app/reco_data/'
 
-mysql_url = 'container_mysql:3306'
-mysql_user = 'root'
-mysql_password = 'my-secret-pw'
-database_name = 'db_movie'
+# mysql_url = 'container_mysql:3306'
+# mysql_user = 'root'
+# mysql_password = 'my-secret-pw'
+# database_name = 'db_movie'
+
+
+imdb_base_url       = Variable.get("imdb_base_url")
+imdb_files_names    = Variable.get("imdb_files_names", deserialize_json=True)["list"]
+processed_filenames = Variable.get("processed_filenames", deserialize_json=True)["list"]
+
+path_raw_data       = Variable.get("path_raw_data")
+path_processed_data = Variable.get("path_processed_data")
+path_reco_data      = Variable.get("path_reco_data")
+
+mysql_url           = Variable.get("mysql_url")
+mysql_user          = Variable.get("mysql_user")
+mysql_password      = Variable.get("mysql_pw")
+database_name       = Variable.get("database_name")
 
 
 # -------------------------------------- #
 # FUNCTIONS
 # -------------------------------------- #
-
-def download():
-
-    for i in range(len(imdb_files_names)):
-        url = imdb_base_url + imdb_files_names[i]
-        destination_path = path_raw_data + imdb_files_names[i]
-        r = requests.get(url, allow_redirects=True)
-        open(destination_path, 'wb').write(r.content)
-
-    return 0
 
 
 def process_title_basics(source_path):
@@ -139,7 +143,7 @@ def process_title_basics(source_path):
 
 
         # Limitation of the data set size
-        df = df[df['startYear']>2010.0]
+        df = df[df['startYear']>2000.0]
         df = df[df['titleType']=='movie']
         df = df[df['isAdult']==0]
 
@@ -575,62 +579,58 @@ def merge_content(source_path):
 # TASKS
 # -------------------------------------- #
 
-task1 = PythonOperator(
-    task_id='download',
-    python_callable=download,
-    dag=my_dag
-)
 
-task2 = PythonOperator(
+
+task1 = PythonOperator(
     task_id='process_title_basics',
     python_callable=process_title_basics,
     op_kwargs={'source_path':path_raw_data + imdb_files_names[0]},
     dag=my_dag
 )
 
-task3 = PythonOperator(
+task2 = PythonOperator(
     task_id='process_name_basics',
     python_callable=process_name_basics,
     op_kwargs={'source_path':path_raw_data + imdb_files_names[1]},
     dag=my_dag
 )
 
-task4 = PythonOperator(
+task3 = PythonOperator(
     task_id='process_title_akas',
     python_callable=process_title_akas,
     op_kwargs={'source_path':path_raw_data + imdb_files_names[2]},
     dag=my_dag
 )
 
-task5 = PythonOperator(
+task4 = PythonOperator(
     task_id='process_title_crew',
     python_callable=process_title_crew,
     op_kwargs={'source_path':path_raw_data + imdb_files_names[3]},
     dag=my_dag
 )
 
-task6 = PythonOperator(
+task5 = PythonOperator(
     task_id='process_title_episode',
     python_callable=process_title_episode,
     op_kwargs={'source_path':path_raw_data + imdb_files_names[4]},
     dag=my_dag
 )
 
-task7 = PythonOperator(
+task6 = PythonOperator(
     task_id='process_title_principal',
     python_callable=process_title_principal,
     op_kwargs={'source_path':path_raw_data + imdb_files_names[5]},
     dag=my_dag
 )
 
-task8 = PythonOperator(
+task7 = PythonOperator(
     task_id='process_title_rating',
     python_callable=process_title_rating,
     op_kwargs={'source_path':path_raw_data + imdb_files_names[6]},
     dag=my_dag
 )
 
-task9 = PythonOperator(
+task8 = PythonOperator(
     task_id='merge_content',
     python_callable=merge_content,
     op_kwargs={'source_path':path_processed_data + processed_filenames[0]},
@@ -644,8 +644,7 @@ task9 = PythonOperator(
 # DEPENDANCIES
 # -------------------------------------- #
 
-task1 >> task2
-task2 >> [task3, task4, task5, task6, task7, task8]
-[task3, task4, task5, task6, task7, task8] >> task9
+task1 >> [task2, task3, task4, task5, task6, task7]
+[task2, task3, task4, task5, task6, task7] >> task8
 
 

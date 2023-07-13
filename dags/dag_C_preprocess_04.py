@@ -25,8 +25,8 @@ from sqlalchemy_utils import database_exists, create_database
 # -------------------------------------- #
 
 my_dag = DAG(
-    dag_id='download_C03',
-    description='download_C03',
+    dag_id='download_C04',
+    description='download_C04',
     tags=['download', 'Pre-Process', 'Process_C'],
     schedule_interval=datetime.timedelta(hours=12),
     default_args={
@@ -41,34 +41,53 @@ my_dag = DAG(
 # -------------------------------------- #
 
 
-imdb_base_url =  'https://datasets.imdbws.com/'
-imdb_files_names = ['title.basics.tsv.gz', 
-                    'name.basics.tsv.gz', 
-                    'title.akas.tsv.gz', 
-                    'title.crew.tsv.gz', 
-                    'title.episode.tsv.gz', 
-                    'title.principals.tsv.gz', 
-                    'title.ratings.tsv.gz']
+# imdb_base_url =  'https://datasets.imdbws.com/'
+# imdb_files_names = ['title.basics.tsv.gz', 
+#                     'name.basics.tsv.gz', 
+#                     'title.akas.tsv.gz', 
+#                     'title.crew.tsv.gz', 
+#                     'title.episode.tsv.gz', 
+#                     'title.principals.tsv.gz', 
+#                     'title.ratings.tsv.gz']
 
 
-processed_filenames = ['title_basics.csv.zip', 
-                    'name_basics.csv.zip', 
-                    'title_akas.csv.zip', 
-                    'title_crew.csv.zip', 
-                    'title_episode.csv.zip', 
-                    'title_principals.csv.zip', 
-                    'title_ratings.csv.zip',
-                    'merged_content.csv.zip',
-                    'api_table.csv.zip']
+# processed_filenames = ['title_basics.csv.zip', 
+#                     'name_basics.csv.zip', 
+#                     'title_akas.csv.zip', 
+#                     'title_crew.csv.zip', 
+#                     'title_episode.csv.zip', 
+#                     'title_principals.csv.zip', 
+#                     'title_ratings.csv.zip',
+#                     'merged_content.csv.zip',
+#                     'api_table.csv.zip']
 
-path_raw_data = '/app/raw_data/'
-path_processed_data = '/app/processed_data/'
-path_reco_data = '/app/reco_data/'
+# path_raw_data = '/app/raw_data/'
+# path_processed_data = '/app/processed_data/'
+# path_reco_data = '/app/reco_data/'
 
-mysql_url = 'container_mysql:3306'
-mysql_user = 'root'
-mysql_password = 'my-secret-pw'
-database_name = 'db_movie'
+# mysql_url = 'container_mysql:3306'
+# mysql_user = 'root'
+# mysql_password = 'my-secret-pw'
+# database_name = 'db_movie'
+
+
+imdb_base_url       = Variable.get("imdb_base_url")
+imdb_files_names    = Variable.get("imdb_files_names", deserialize_json=True)["list"]
+processed_filenames = Variable.get("processed_filenames", deserialize_json=True)["list"]
+
+path_raw_data       = Variable.get("path_raw_data")
+path_processed_data = Variable.get("path_processed_data")
+path_reco_data      = Variable.get("path_reco_data")
+
+# mysql_url           = Variable.get("mysql_url")
+# mysql_user          = Variable.get("mysql_user")
+# mysql_password      = Variable.get("mysql_pw")
+# database_name       = Variable.get("database_name")
+
+mysql_url           = Variable.get("mysql", deserialize_json=True)["url"]
+mysql_user          = Variable.get("mysql", deserialize_json=True)["user"]
+mysql_password      = Variable.get("mysql", deserialize_json=True)["password"]
+database_name       = Variable.get("mysql", deserialize_json=True)["database_name"]
 
 
 # -------------------------------------- #
@@ -82,6 +101,7 @@ def download():
         destination_path = path_raw_data + imdb_files_names[i]
         r = requests.get(url, allow_redirects=True)
         open(destination_path, 'wb').write(r.content)
+
 
     return 0
 
