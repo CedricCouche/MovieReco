@@ -248,30 +248,29 @@ async def get_recommendation(movie_user_title:str):
     with engine.connect() as connection:
         results = connection.execute(text(stmt))
 
-    results = [
+        results = [
         RecoCS(
             tconst=i[0],
-            tconst=i[1],
-            top1=i[2],
-            top2=i[3],
-            top3=i[4],
-            top4=i[5],
-            top5=i[6],
-            top6=i[7],
-            top7=i[8],
-            top8=i[9],
-            top9=i[10],
-            top10=i[11],
-            score1=i[12],
-            score2=i[13],
-            score3=i[14],
-            score4=i[15],
-            score5=i[16],
-            score6=i[17],
-            score7=i[18],
-            score8=i[19],
-            score9=i[20],
-            score10=i[21]
+            top1=i[1],
+            top2=i[2],
+            top3=i[3],
+            top4=i[4],
+            top5=i[5],
+            top6=i[6],
+            top7=i[7],
+            top8=i[8],
+            top9=i[9],
+            top10=i[10],
+            score1=i[11],
+            score2=i[12],
+            score3=i[13],
+            score4=i[14],
+            score5=i[15],
+            score6=i[16],
+            score7=i[17],
+            score8=i[18],
+            score9=i[19],
+            score10=i[20]
             ) for i in results.fetchall()]
 
     if len(results) == 0:
