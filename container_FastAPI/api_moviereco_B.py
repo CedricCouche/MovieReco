@@ -87,8 +87,8 @@ class Movie(BaseModel):
     yearCategory: str
     directors_id: str
     writers_id: str
-    averageRating: str
-    numVotes: str
+    averageRating: float
+    numVotes: int
 
 class RecoCS(BaseModel):
     tconst: str
@@ -102,16 +102,16 @@ class RecoCS(BaseModel):
     top8: str
     top9: str
     top10: str
-    score1: int
-    score2: int
-    score3: int
-    score4: int
-    score5: int
-    score6: int
-    score7: int
-    score8: int
-    score9: int
-    score10: int
+    score1: float
+    score2: float
+    score3: float
+    score4: float
+    score5: float
+    score6: float
+    score7: float
+    score8: float
+    score9: float
+    score10: float
 
 
 
@@ -121,10 +121,10 @@ class RecoCS(BaseModel):
 api = FastAPI(
     title="Movie recommendation",
     description="Content based Movie recommendation",
-    version="1.6.1",
+    version="1.6.5",
     openapi_tags=[
               {'name':'Info', 'description':'Info'},
-              {'name':'MovieReco','description':'Get recommendation'}, 
+              {'name':'Recommandation','description':'Get recommendation'}, 
               {'name':'Admin', 'description':'Staff only'} 
              ]
 )
@@ -182,7 +182,7 @@ async def get_users():
 
 
 @api.get('/get-film-info/{tconst:str}', name="Return information on a film" , response_model=Movie, tags=['Info'])
-async def list_genres(tconst):
+async def get_filminfo(tconst):
     """ 
     Return information on a film
     """
@@ -193,7 +193,7 @@ async def list_genres(tconst):
     #inspector = inspect(engine)
 
 
-    stmt = 'SELECT * FROM {table} WHERE tconst = {tconst};'.format(table=table_movies, tconst=tconst)
+    stmt = 'SELECT * FROM {table} WHERE tconst = {tconst};'.format(table=table_movies, tconst=text(tconst))
 
     with engine.connect() as connection:
         results = connection.execute(text(stmt))
@@ -231,8 +231,8 @@ async def list_genres(tconst):
         return results[0]
 
 
-@api.get('/get_reco_cs/{movie_user_title:str}', name="Return a list of similar movies" , tags=['Recommandation'])
-async def get_recommendation(movie_user_title:str):
+@api.get('/get_reco_cs/{tconst:str}', name="Return a list of similar movies" , tags=['Recommandation'])
+async def get_recommendation(tconst:str):
     """ 
     Return a list of similar movies
     """
@@ -240,38 +240,36 @@ async def get_recommendation(movie_user_title:str):
     # Creating MySQL connection
     engine = create_engine(connection_url, echo=True)
     conn = engine.connect()
-    #inspector = inspect(engine)
 
-
-    stmt = 'SELECT * FROM {table} WHERE tconst = {tconst};'.format(table=table_recocs, tconst=movie_user_title)
+    stmt = 'SELECT * FROM {table} WHERE tconst={tconst};'.format(table=table_recocs, tconst=text(tconst))
 
     with engine.connect() as connection:
         results = connection.execute(text(stmt))
 
         results = [
-        RecoCS(
-            tconst=i[0],
-            top1=i[1],
-            top2=i[2],
-            top3=i[3],
-            top4=i[4],
-            top5=i[5],
-            top6=i[6],
-            top7=i[7],
-            top8=i[8],
-            top9=i[9],
-            top10=i[10],
-            score1=i[11],
-            score2=i[12],
-            score3=i[13],
-            score4=i[14],
-            score5=i[15],
-            score6=i[16],
-            score7=i[17],
-            score8=i[18],
-            score9=i[19],
-            score10=i[20]
-            ) for i in results.fetchall()]
+            RecoCS(
+                tconst=i[0],
+                top1=i[1],
+                top2=i[2],
+                top3=i[3],
+                top4=i[4],
+                top5=i[5],
+                top6=i[6],
+                top7=i[7],
+                top8=i[8],
+                top9=i[9],
+                top10=i[10],
+                score1=i[11],
+                score2=i[12],
+                score3=i[13],
+                score4=i[14],
+                score5=i[15],
+                score6=i[16],
+                score7=i[17],
+                score8=i[18],
+                score9=i[19],
+                score10=i[20]
+                ) for i in results.fetchall()]
 
     if len(results) == 0:
         # Closing MySQL connection
@@ -299,7 +297,6 @@ async def list_films(number:int):
     # Creating MySQL connection
     engine = create_engine(connection_url, echo=True)
     conn = engine.connect()
-    #inspector = inspect(engine)
 
     stmt = 'SELECT * FROM {table} LIMIT {number};'.format(table=table_movies, number=number)
 
