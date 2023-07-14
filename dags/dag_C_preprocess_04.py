@@ -79,11 +79,6 @@ path_raw_data       = Variable.get("path_raw_data")
 path_processed_data = Variable.get("path_processed_data")
 path_reco_data      = Variable.get("path_reco_data")
 
-# mysql_url           = Variable.get("mysql_url")
-# mysql_user          = Variable.get("mysql_user")
-# mysql_password      = Variable.get("mysql_pw")
-# database_name       = Variable.get("database_name")
-
 mysql_url           = Variable.get("mysql", deserialize_json=True)["url"]
 mysql_user          = Variable.get("mysql", deserialize_json=True)["user"]
 mysql_password      = Variable.get("mysql", deserialize_json=True)["password"]
@@ -159,7 +154,7 @@ def process_title_basics(source_path):
 
 
         # Limitation of the data set size
-        df = df[df['startYear']>2010.0]
+        df = df[df['startYear']>2018.0]
         df = df[df['titleType']=='movie']
         df = df[df['isAdult']==0]
 
@@ -490,7 +485,9 @@ def process_title_rating(source_path):
         df = df[df['tconst'].isin(list_movies)]
 
         # Clean-up
-        
+        df = df.fillna(0)
+        print('average rating : ', df['averageRating'].unique())
+        print('numVotes : ',df['numVotes'].unique())
 
         # Store data in MySQL DB
         df.to_sql('imdb_titleratings', engine, if_exists='replace', index=False)

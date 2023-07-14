@@ -51,10 +51,10 @@ my_dag = DAG(
 # database_name = 'db_movie'
 
 
-mysql_url       = Variable.get("mysql_url")
-mysql_user      = Variable.get("mysql_user")
-mysql_password  = Variable.get("mysql_pw")
-database_name   = Variable.get("database_name")
+mysql_url      = Variable.get("mysql", deserialize_json=True)["url"]
+mysql_user     = Variable.get("mysql", deserialize_json=True)["user"]
+mysql_password = Variable.get("mysql", deserialize_json=True)["password"]
+database_name  = Variable.get("mysql", deserialize_json=True)["database_name"]
 
 
 # -------------------------------------- #
