@@ -1,0 +1,6 @@
+logs/*
+dags_graveyard/*
+work-in-progress/*
+raw_data/*
+db_dump_temp/*
+processed_data/*
