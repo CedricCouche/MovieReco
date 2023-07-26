@@ -28,9 +28,9 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 
 my_dag = DAG(
-    dag_id='cosine-similarity_C',
-    description='cosine-similarity_C',
-    tags=['model', 'Process_C'],
+    dag_id='cosine-similarity_D',
+    description='cosine-similarity_D',
+    tags=['model', 'Process_D'],
     schedule_interval=datetime.timedelta(hours=12),
     default_args={
         'owner': 'airflow',
@@ -43,12 +43,6 @@ my_dag = DAG(
 # -------------------------------------- #
 # Global variables
 # -------------------------------------- #
-
-
-# mysql_url = 'container_mysql:3306'
-# mysql_user = 'root'
-# mysql_password = 'my-secret-pw'
-# database_name = 'db_movie'
 
 
 mysql_url      = Variable.get("mysql", deserialize_json=True)["url"]
@@ -248,8 +242,6 @@ def cosine_similarity_B(top_n):
 
         print('cosine_similarity done')
         return 0
-
-
 
 
 

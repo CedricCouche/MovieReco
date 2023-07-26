@@ -41,29 +41,6 @@ my_dag = DAG(
 # -------------------------------------- #
 
 
-# imdb_base_url =  'https://datasets.imdbws.com/'
-# imdb_files_names = ['title.basics.tsv.gz', 
-#                     'name.basics.tsv.gz', 
-#                     'title.akas.tsv.gz', 
-#                     'title.crew.tsv.gz', 
-#                     'title.episode.tsv.gz', 
-#                     'title.principals.tsv.gz', 
-#                     'title.ratings.tsv.gz']
-
-
-# processed_filenames = ['title_basics.csv.zip', 
-#                     'name_basics.csv.zip', 
-#                     'title_akas.csv.zip', 
-#                     'title_crew.csv.zip', 
-#                     'title_episode.csv.zip', 
-#                     'title_principals.csv.zip', 
-#                     'title_ratings.csv.zip',
-#                     'merged_content.csv.zip',
-#                     'api_table.csv.zip']
-
-# path_raw_data = '/app/raw_data/'
-
-
 imdb_base_url       = Variable.get("imdb_base_url")
 imdb_files_names    = Variable.get("imdb_files_names", deserialize_json=True)["list"]
 processed_filenames = Variable.get("processed_filenames", deserialize_json=True)["list"]
