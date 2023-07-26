@@ -25,7 +25,7 @@ from sqlalchemy_utils import database_exists, create_database
 # -------------------------------------- #
 
 my_dag = DAG(
-    dag_id='get_new_data_D01',
+    dag_id='D02_Reccurent_download_v01',
     description='download data from IMDB',
     tags=['download', 'Process_D'],
     schedule_interval=datetime.timedelta(hours=12),

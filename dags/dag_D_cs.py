@@ -28,7 +28,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 
 my_dag = DAG(
-    dag_id='cosine-similarity_D',
+    dag_id='D04_cosine-similarity_v01',
     description='cosine-similarity_D',
     tags=['model', 'Process_D'],
     schedule_interval=datetime.timedelta(hours=12),
