@@ -36,15 +36,47 @@ Our final table used for recommandation is the one below :
 
 
 
-## How to install ?
+## How to install on distant machine (Ubuntu / Debian) ?
 
 #### Repository clone
 
 ``` 
-git clone git@github.com:SarahSST/MLOPS-Movie-Recommandation.git
+git clone https://github.com/CedricCouche/MovieReco.git
 ```
 
-#### Linux packages
+#### Python version set-up
+
+```
+# Install de PIP (nécessaire à PyEnv)
+sudo apt install pip
+
+# Cloner le repo
+git clone https://github.com/pyenv/pyenv.git ~/.pyenv # pyenv est isntallé dans cedric
+
+# compile :
+cd ~/.pyenv && src/configure && make -C src
+
+# Ajouter les commandes à son .profile (stocké dans /home/cedric) : selon la distrib, checker le github pour .bach_profile ou autres
+echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.profile
+echo 'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.profile
+echo 'eval "$(pyenv init -)"' >> ~/.profile
+
+# For path to take effect
+exec "$SHELL"
+
+sudo apt install build-essential libssl-dev zlib1g-dev \
+libbz2-dev libreadline-dev libsqlite3-dev curl \
+libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+```
+
+Reboot the distant machine
+
+```
+pyenv install 3.8.10
+cd ~/MovieReco && pyenv local 3.8.10
+```
+
+#### Linux packages installation
 
 SQLAlchemy python package requires  mysqlclient and  mysql-connector-python packages, but both packages requires to be built, and requires some additionnales packages to be installed on linux
 
@@ -64,7 +96,14 @@ sudo apt install mysql-client-core-8.0
 sudo apt install pip docker-compose
 ```
 
-#### Python Packages
+#### Virtual environnement set-up
+
+```
+cd ~/MovieReco && python3 -m venv .venv
+source .venv/bin/activate
+```
+
+#### Python Packages installation
 
 Python version used for this project is : 3.8.10
 
