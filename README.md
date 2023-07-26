@@ -112,8 +112,6 @@ source .venv/bin/activate
 
 #### Python Packages installation
 
-Python version used for this project is : 3.8.10
-
 ``` bash
 pip install -r requirements.txt
 ```
