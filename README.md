@@ -38,6 +38,11 @@ Our final table used for recommandation is the one below :
 
 ## How to install on distant machine (Ubuntu / Debian) ?
 
+For information, OS used for this project is Ubuntu 22.04 (LTS)
+
+Recommanded configuration : 2-core CPU and 16G of RAM
+
+
 #### Repository clone
 
 ``` 
@@ -45,6 +50,8 @@ git clone https://github.com/CedricCouche/MovieReco.git
 ```
 
 #### Python version set-up
+
+This project is base on python==3.7.10
 
 ```
 # Install de PIP (nécessaire à PyEnv)
