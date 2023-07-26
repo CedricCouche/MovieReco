@@ -159,20 +159,12 @@ ssh -i "your_key.pem" -L 8000:localhost:8000 -L 8080:localhost:8080 -L 8501:loca
 login: airflow
 password: airflow
 
-#### Airflow variables
+#### Airflow variables load
 
+Variables are required to run DAGs, thy are store in the file dags_variables.json
 In Airflow web-interface, go in menu Admin > Variables
 Import the file dag_variables.json
 
 
 
-## To be discarded : 
-
-#### MySQL connection setup
-
-Within the Airflow interface, a connection has to be created for MySQL.
-In Admin menu, select Connection and fill fields as shown in the screen capture below.
-MySQL password is : my-secret-pw
-
-![MySQL connection setup](./images/mysql_connection_creation.png)
 
