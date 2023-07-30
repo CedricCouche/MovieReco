@@ -25,9 +25,10 @@ from sqlalchemy_utils import database_exists, create_database
 # -------------------------------------- #
 
 my_dag = DAG(
-    dag_id='D01_Initial_Load_v01',
-    description='Initial_Load',
-    tags=['Initialisation', 'Process_D'],
+    dag_id='D03_Reccurent_Preprocess_v02',
+    description='Preprocess',
+    tags=['Pre-Process', 'Process_D'],
+    schedule_interval=datetime.timedelta(minutes=10),
     default_args={
         'owner': 'airflow',
         'start_date': days_ago(0, minute=1),
@@ -58,17 +59,70 @@ database_name       = Variable.get("mysql", deserialize_json=True)["database_nam
 # FUNCTIONS
 # -------------------------------------- #
 
-def download():
 
-    for i in range(len(imdb_files_names)):
+def movie_to_process(batch_nb, source_path):
+        """
+        description : return a list of movies to process
 
-        url = imdb_base_url + imdb_files_names[i]
-        destination_path = path_raw_data + imdb_files_names[i]
+        Arguments : 
+            - nb_movies : batch size of movies to process
 
-        r = requests.get(url, allow_redirects=True)
-        open(destination_path, 'wb').write(r.content)
+        """
+        print('process started')
 
-    return 0
+        # Connection to MySQL
+        connection_url = 'mysql://{user}:{password}@{url}/{database}'.format(
+            user=mysql_user,
+            password=mysql_password,
+            url=mysql_url,
+            database = database_name
+            )
+
+        engine = create_engine(connection_url)
+        conn = engine.connect()
+
+        # Load
+        query = """ SELECT tconst FROM imdb_titlebasics; """
+        df_existing_tconst = pd.read_sql(query, engine)
+        list_movies = df_existing_tconst['tconst'].tolist()
+        
+        print('len list_movies:', len(list_movies))
+
+        # Load
+        df = pd.read_csv(source_path,
+                 compression='gzip', 
+                 sep='\t', 
+                 usecols= ['tconst','titleType','isAdult'],
+                 dtype= {'tconst':object, 'titleType':object, 'isAdult':object}
+                 ) 
+
+        # Limitation of existing films in title basics
+        df = df[df['titleType']=='movie']
+        df = df[df['isAdult']==0]
+
+        # Keep only tconst not existing in MySQL
+        df = df[~df['tconst'].isin(list_movies)] # '~' sign allows to reverse the logic of isin()
+        df = df['tconst']
+
+        # Keep only a limited number of tconst
+        df = df.head(batch_nb)
+
+  
+        # Store data in MySQL DB
+        df.to_sql('title_to_process', engine, if_exists='replace', index=False)
+
+        # Deletion of df to save memory
+        df = pd.DataFrame()
+        df_existing_tconst = pd.DataFrame()
+        del df
+        del df_existing_tconst
+
+        # Closing MySQL connection
+        conn.close()
+        engine.dispose()
+        print('process done')
+
+        return 0
 
 
 def process_title_basics(source_path):
@@ -89,7 +143,28 @@ def process_title_basics(source_path):
 
         print('process_title_basics started')
 
-        # Load
+
+        # Connection to MySQL
+        connection_url = 'mysql://{user}:{password}@{url}/{database}'.format(
+            user=mysql_user,
+            password=mysql_password,
+            url=mysql_url,
+            database = database_name
+            )
+
+        engine = create_engine(connection_url)
+        conn = engine.connect()
+
+        # Load list of movies to process
+        query = """ SELECT tconst FROM title_to_process; """
+        df_tconst = pd.read_sql(query, engine)
+        tconst_to_process = df_tconst['tconst'].tolist()
+
+        print('len list_movies:', len(tconst_to_process))
+        print('list_movies[:5]:', tconst_to_process[:5])
+
+
+        # Load IMDB main file 
         column_list = ['tconst', 'titleType', 'primaryTitle', 'startYear', 'runtimeMinutes', 'genres', 'isAdult']
         dict_types = {'tconst':object, 'titleType':object, 'primaryTitle':object, 'startYear':object, 'runtimeMinutes':object, 'genres':object, 'isAdult':object}
 
@@ -101,6 +176,8 @@ def process_title_basics(source_path):
                  na_values=['\\N', 'nan', 'NA', ' nan','  nan', '   nan']
                  ) 
 
+        # Limit to films to process
+        df = df[df['tconst'].isin(tconst_to_process)]
 
         # Drop of rows containing NANs
         df = df.dropna(how='any', axis=0, subset=['startYear', 'runtimeMinutes', 'genres','isAdult'])
@@ -124,7 +201,6 @@ def process_title_basics(source_path):
 
 
         # Limitation of the data set size
-        df = df[df['startYear']<1950.0]
         df = df[df['titleType']=='movie']
         df = df[df['isAdult']==0]
 
@@ -156,6 +232,41 @@ def process_title_basics(source_path):
         df['yearCategory'] = df['yearCategory'].astype(str)
 
 
+
+        # Store data in MySQL DB
+        df.to_sql('imdb_titlebasics', engine, if_exists='append', index=False)
+
+        # Save in CSV
+        # df.to_csv(destination_path, index=False, compression="zip")
+
+
+        # Deletion of df to save memory
+        df = pd.DataFrame()
+        df_tconst = pd.DataFrame()
+        del df
+        del df_tconst
+
+
+        # Closing MySQL connection
+        conn.close()
+        engine.dispose()
+        print('process_title_basics done')
+
+        return 0
+
+
+def process_title_crew(source_path):
+        """
+        description : load & pre-process data
+
+        Original fields from imdb : 
+            - tconst (string) - alphanumeric unique identifier of the title
+            - directors (array of nconsts) - director(s) of the given title
+            - writers (array of nconsts) – writer(s) of the given title
+
+        """
+        print('process started')
+
         # Connection to MySQL
         connection_url = 'mysql://{user}:{password}@{url}/{database}'.format(
             user=mysql_user,
@@ -166,45 +277,119 @@ def process_title_basics(source_path):
 
         engine = create_engine(connection_url)
         conn = engine.connect()
-        # inspector = inspect(engine)
 
-        # # SQL Table : creation if not existing
-        # if not 'imdb_titlebasics' in inspector.get_table_names():
-        #     meta = MetaData()
+        # Load list of movies to process
+        query = """ SELECT tconst FROM title_to_process; """
+        df_tconst = pd.read_sql(query, engine)
+        tconst_to_process = df_tconst['tconst'].tolist()
+        
+        print('len list_movies:', len(tconst_to_process))
 
-        #     imdb_titlebasics = Table(
-        #     'imdb_titlebasics', meta, 
-        #     Column('tconst', String(15), primary_key=True), 
-        #     Column('titleType', String(150)), 
-        #     Column('primaryTitle', String(150)),
-        #     Column('startYear', Integer),
-        #     Column('runtimeMinutes', Integer),
-        #     Column('genres',  String(150)),
-        #     Column('runtimeCategory',  String(2)),
-        #     Column('yearCategory',  String(2))
-        #     ) 
+        # Load
+        df = pd.read_csv(source_path,
+                    compression='gzip', 
+                    sep='\t', 
+                    na_values=['\\N', 'nan', 'NA', ' nan','  nan', '   nan']
+                    ) 
 
-        #     meta.create_all(engine)
+        df = df.rename({'directors':'directors_id', 'writers':'writers_id'}, axis=1)
 
+        print('columns :', df.columns)
+
+        # Limitation of existing films in title basics
+        df = df[df['tconst'].isin(tconst_to_process)]
+
+        # Clean-up
+        
 
         # Store data in MySQL DB
-        df.to_sql('imdb_titlebasics', engine, if_exists='replace', index=False)
-
-        # Save in CSV
-        # df.to_csv(destination_path, index=False, compression="zip")
-
+        df.to_sql('imdb_titlecrew', engine, if_exists='append', index=False)
 
         # Deletion of df to save memory
         df = pd.DataFrame()
+        df_tconst = pd.DataFrame()
         del df
+        del df_tconst
 
         # Closing MySQL connection
         conn.close()
         engine.dispose()
-        print('process_title_basics done')
+        print('process done')
 
         return 0
 
+
+def nconst_to_process():
+        """
+        description : return a list of nconst to process
+
+        Arguments : 
+            - nb_movies : batch size of nconst to process
+
+        """
+        print('process started')
+
+        # Connection to MySQL
+        connection_url = 'mysql://{user}:{password}@{url}/{database}'.format(
+            user=mysql_user,
+            password=mysql_password,
+            url=mysql_url,
+            database = database_name
+            )
+
+        engine = create_engine(connection_url)
+        conn = engine.connect()
+
+        # Load
+        query = """ SELECT directors_id, writers_id FROM imdb_titlecrew; """
+        df_titlecrew = pd.read_sql(query, engine)
+        
+        df_directors = pd.DataFrame()
+        df_writers = pd.DataFrame()
+        df_directors['nconst'] = df_titlecrew['directors_id']
+        df_writers['nconst']  = df_titlecrew['writers_id']
+        df_combine = pd.concat([df_directors, df_writers], axis=0)
+        df_combine = df_combine.drop_duplicates(ignore_index=True)
+
+        list_nconst_A = df_combine['nconst'].tolist()
+        
+        # Load
+        query = """ SELECT nconst FROM imdb_namebasics; """
+        df_namebasics = pd.read_sql(query, engine)
+        list_nconst_B = df_namebasics['nconst'].tolist()
+
+        # Keep only tconst not existing in MySQL
+        df = df_namebasics[~df_namebasics['nconst'].isin(list_nconst_A)] # '~' sign allows to reverse the logic of isin()
+        df = df['nconst']
+
+        # Temp
+        print('Nb df_directors:', df_directors.shape[0])
+        print('Nb df_writers:', df_writers.shape[0])
+        print('Nb df_combine:', df_combine.shape[0])
+        print('len list_nconst_A:', len(list_nconst_A))
+        print('sample of list_nconst_A:', list_nconst_A[:3])
+        print('len list_nconst_B:', len(list_nconst_B))
+        print('sample of list_nconst_B:', list_nconst_B[:3])
+        print('Nb nconst to add:', df.shape[0])
+
+        # Store data in MySQL DB
+        df.to_sql('nconst_to_process', engine, if_exists='replace', index=False)
+
+        # Deletion of df to save memory
+        df = pd.DataFrame()
+        df_nconst = pd.DataFrame()
+        del df
+        del df_titlecrew
+        del df_directors
+        del df_writers
+        del df_combine
+
+        # Closing MySQL connection
+        conn.close() 
+        engine.dispose()
+        print('process done')
+
+        return 0
 
 def process_name_basics(source_path):
         """
@@ -231,18 +416,17 @@ def process_name_basics(source_path):
 
         engine = create_engine(connection_url)
         conn = engine.connect()
-        inspector = inspect(engine)
 
+
+        # Load list of movies to process
+        query = """ SELECT nconst FROM nconst_to_process; """
+        df_nconst = pd.read_sql(query, engine)
+        nconst_to_process = df_nconst['nconst'].tolist()
 
         # Load
-        column_list = ['nconst', 'primaryName']
-        dict_types = {'nconst':object, 'primaryName':object}
-
         df = pd.read_csv(source_path,
                     compression='gzip', 
                     sep='\t', 
-                    usecols= column_list,
-                    dtype=dict_types,
                     na_values=['\\N', 'nan', 'NA', ' nan','  nan', '   nan']
                     ) 
 
@@ -250,17 +434,20 @@ def process_name_basics(source_path):
         print('Number of persons: ', df.shape[0])
 
         # Limitation of existing films in title basics
-
+        df = df[df['nconst'].isin(nconst_to_process)]
+        df = df[['nconst', 'primaryName']]
 
         # Clean-up
         
 
         # Store data in MySQL DB
-        df.to_sql('imdb_namebasics', engine, if_exists='replace', index=False)
+        df.to_sql('imdb_namebasics', engine, if_exists='append', index=False)
 
         # Deletion of df to save memory
         df = pd.DataFrame()
+        df_nconst = pd.DataFrame()
         del df
+        del df_nconst
 
         # Closing MySQL connection
         conn.close()
@@ -292,71 +479,6 @@ def process_title_akas(source_path):
 
         # print('process done')
 
-
-        return 0
-
-
-def process_title_crew(source_path):
-        """
-        description : load & pre-process data
-
-        Original fields from imdb : 
-            - tconst (string) - alphanumeric unique identifier of the title
-            - directors (array of nconsts) - director(s) of the given title
-            - writers (array of nconsts) – writer(s) of the given title
-
-        """
-        print('process started')
-
-        # Connection to MySQL
-        connection_url = 'mysql://{user}:{password}@{url}/{database}'.format(
-            user=mysql_user,
-            password=mysql_password,
-            url=mysql_url,
-            database = database_name
-            )
-
-        engine = create_engine(connection_url)
-        conn = engine.connect()
-        inspector = inspect(engine)
-
-        # Load
-        query = """ SELECT tconst FROM imdb_titlebasics; """
-        df_existing_tconst = pd.read_sql(query, engine)
-        list_movies = df_existing_tconst['tconst'].tolist()
-        
-        print('len list_movies:', len(list_movies))
-
-        # Load
-        df = pd.read_csv(source_path,
-                    compression='gzip', 
-                    sep='\t', 
-                    na_values=['\\N', 'nan', 'NA', ' nan','  nan', '   nan']
-                    ) 
-
-        df = df.rename({'directors':'directors_id', 'writers':'writers_id'}, axis=1)
-
-        print('columns :', df.columns)
-
-        # Limitation of existing films in title basics
-        df = df[df['tconst'].isin(list_movies)]
-
-        # Clean-up
-        
-
-        # Store data in MySQL DB
-        df.to_sql('imdb_titlecrew', engine, if_exists='replace', index=False)
-
-        # Deletion of df to save memory
-        df = pd.DataFrame()
-        df_existing_tconst = pd.DataFrame()
-        del df
-        del df_existing_tconst
-
-        # Closing MySQL connection
-        conn.close()
-        engine.dispose()
-        print('process done')
 
         return 0
 
@@ -435,14 +557,14 @@ def process_title_rating(source_path):
 
         engine = create_engine(connection_url)
         conn = engine.connect()
-        inspector = inspect(engine)
 
-        # Load
-        query = """ SELECT tconst FROM imdb_titlebasics; """
-        df_existing_tconst = pd.read_sql(query, engine)
-        list_movies = df_existing_tconst['tconst'].tolist()
+        # Load list of movies to process
+        query = """ SELECT tconst FROM title_to_process; """
+        df_tconst = pd.read_sql(query, engine)
+        tconst_to_process = df_tconst['tconst'].tolist()
         
-        print('len list_movies:', len(list_movies))
+        print('len list_movies:', len(tconst_to_process))
+
 
         # Load
         df = pd.read_csv(source_path,
@@ -453,19 +575,19 @@ def process_title_rating(source_path):
 
 
         # Limitation of existing films in title basics
-        df = df[df['tconst'].isin(list_movies)]
+        df = df[df['tconst'].isin(tconst_to_process)]
 
         # Clean-up
         
 
         # Store data in MySQL DB
-        df.to_sql('imdb_titleratings', engine, if_exists='replace', index=False)
+        df.to_sql('imdb_titleratings', engine, if_exists='append', index=False)
 
         # Deletion of df to save memory
         df = pd.DataFrame()
-        df_existing_tconst = pd.DataFrame()
+        df_tconst = pd.DataFrame()
         del df
-        del df_existing_tconst
+        del df_tconst
 
         # Closing MySQL connection
         conn.close()
@@ -512,26 +634,6 @@ def merge_content(source_path):
         df_imdb_content = df_imdb_content.dropna(how='any', axis=0)
 
 
-        # # SQL Table : creation if not existing
-        # inspector = inspect(engine)
-
-        # if not 'imdb_content' in inspector.get_table_names():
-        #     meta = MetaData()
-
-        #     imdb_content = Table(
-        #     'imdb_content', meta, 
-        #     Column('tconst', String(15), primary_key=True), 
-        #     Column('titleType', String(150)), 
-        #     Column('primaryTitle', String(150)),
-        #     Column('startYear', Integer),
-        #     Column('runtimeMinutes', Integer),
-        #     Column('genres',  String(150)),
-        #     Column('runtimeCategory',  String(2)),
-        #     Column('yearCategory',  String(2))
-        #     ) 
-
-        #     meta.create_all(engine)
-
         # Store in MySQL DB
         df_imdb_content.to_sql('imdb_content', engine, if_exists='replace', index=False)
 
@@ -561,62 +663,70 @@ def merge_content(source_path):
 # TASKS
 # -------------------------------------- #
 
-task0 = PythonOperator(
-    task_id='download',
-    python_callable=download,
+
+task1 = PythonOperator(
+    task_id='movie_to_process',
+    python_callable=movie_to_process,
+    op_kwargs={'batch_nb':100, 'source_path':path_raw_data + imdb_files_names[0]},
     dag=my_dag
 )
 
-task1 = PythonOperator(
+task2 = PythonOperator(
     task_id='process_title_basics',
     python_callable=process_title_basics,
     op_kwargs={'source_path':path_raw_data + imdb_files_names[0]},
     dag=my_dag
 )
 
-task2 = PythonOperator(
-    task_id='process_name_basics',
-    python_callable=process_name_basics,
-    op_kwargs={'source_path':path_raw_data + imdb_files_names[1]},
-    dag=my_dag
-)
-
 task3 = PythonOperator(
-    task_id='process_title_akas',
-    python_callable=process_title_akas,
-    op_kwargs={'source_path':path_raw_data + imdb_files_names[2]},
-    dag=my_dag
-)
-
-task4 = PythonOperator(
     task_id='process_title_crew',
     python_callable=process_title_crew,
     op_kwargs={'source_path':path_raw_data + imdb_files_names[3]},
     dag=my_dag
 )
 
+task4 = PythonOperator(
+    task_id='nconst_to_process',
+    python_callable=nconst_to_process,
+    dag=my_dag
+)
+
 task5 = PythonOperator(
+    task_id='process_name_basics',
+    python_callable=process_name_basics,
+    op_kwargs={'source_path':path_raw_data + imdb_files_names[1]},
+    dag=my_dag
+)
+
+task6 = PythonOperator(
+    task_id='process_title_akas',
+    python_callable=process_title_akas,
+    op_kwargs={'source_path':path_raw_data + imdb_files_names[2]},
+    dag=my_dag
+)
+
+task7 = PythonOperator(
     task_id='process_title_episode',
     python_callable=process_title_episode,
     op_kwargs={'source_path':path_raw_data + imdb_files_names[4]},
     dag=my_dag
 )
 
-task6 = PythonOperator(
+task8 = PythonOperator(
     task_id='process_title_principal',
     python_callable=process_title_principal,
     op_kwargs={'source_path':path_raw_data + imdb_files_names[5]},
     dag=my_dag
 )
 
-task7 = PythonOperator(
+task9 = PythonOperator(
     task_id='process_title_rating',
     python_callable=process_title_rating,
     op_kwargs={'source_path':path_raw_data + imdb_files_names[6]},
     dag=my_dag
 )
 
-task8 = PythonOperator(
+task10 = PythonOperator(
     task_id='merge_content',
     python_callable=merge_content,
     op_kwargs={'source_path':path_processed_data + processed_filenames[0]},
@@ -630,9 +740,10 @@ task8 = PythonOperator(
 # DEPENDANCIES
 # -------------------------------------- #
 
-task0 >> task1
 task1 >> task2
-task2 >> [task3, task4, task5, task6, task7]
-[task3, task4, task5, task6, task7] >> task8
+task2 >> task3
+task3 >> task4
+task4 >> [task5, task6, task7, task8, task9]
+[task5, task6, task7, task8, task9] >> task10
 
 
