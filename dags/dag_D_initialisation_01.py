@@ -28,7 +28,6 @@ my_dag = DAG(
     dag_id='D01_Initial_Load_v01',
     description='Initial_Load',
     tags=['Initialisation', 'Process_D'],
-    schedule_interval=datetime.timedelta(hours=12),
     default_args={
         'owner': 'airflow',
         'start_date': days_ago(0, minute=1),
@@ -125,7 +124,7 @@ def process_title_basics(source_path):
 
 
         # Limitation of the data set size
-        df = df[df['startYear']==2000.0]
+        df = df[df['startYear']<1950.0]
         df = df[df['titleType']=='movie']
         df = df[df['isAdult']==0]
 
@@ -258,9 +257,7 @@ def process_name_basics(source_path):
 
         # Deletion of df to save memory
         df = pd.DataFrame()
-        df_existing_tconst = pd.DataFrame()
         del df
-        del df_existing_tconst
 
         # Closing MySQL connection
         conn.close()
@@ -631,7 +628,8 @@ task8 = PythonOperator(
 # -------------------------------------- #
 
 task0 >> task1
-task1 >> [task2, task3, task4, task5, task6, task7]
-[task2, task3, task4, task5, task6, task7] >> task8
+task1 >> task2
+task2 >> [task3, task4, task5, task6, task7]
+[task3, task4, task5, task6, task7] >> task8
 
 
