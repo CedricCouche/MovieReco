@@ -16,6 +16,7 @@ EXPOSE 8501
 ADD streamlit_app.py ./
 ADD 1_Welcome.py ./pages
 ADD 2_Movie-Reco.py ./pages
+ADD 3_MySQL.py ./pages
 
 HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
 
