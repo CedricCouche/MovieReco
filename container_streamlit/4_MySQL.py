@@ -4,7 +4,8 @@ import requests
 import pandas as pd
 import sqlalchemy
 from sqlalchemy import create_engine, inspect
-from sqlalchemy import Table, Column, Integer, String, ForeignKey, MetaData, text 
+from sqlalchemy import Table, Column, Integer, String, ForeignKey, MetaData, text
+from sqlalchemy import func
 
 
 st.markdown('# MySQL Info')
@@ -17,7 +18,6 @@ mysql = {"database_name": "db_movie",
             "url": "container_mysql:3306", 
             "user": "root" }
 
-
 # Connection to MySQL
 connection_url = 'mysql://{user}:{password}@{url}/{database}'.format(
     user        = mysql['user'],
@@ -25,7 +25,6 @@ connection_url = 'mysql://{user}:{password}@{url}/{database}'.format(
     url         = mysql['url'],
     database    = mysql['database_name']
     )
-
 
 engine = create_engine(connection_url)
 conn = engine.connect()
@@ -43,6 +42,15 @@ st.markdown('## Tables Info')
 
 st.markdown('### imdb_content')
 
-query = """ SELECT * FROM imdb_content LIMIT 10; """
+imdb_content_rows = engine.query(func.count(imdb_content.tconst)).scalar()
+st.write('Number of rows: ', imdb_content_rows)
+
+query = """ SELECT * FROM imdb_content LIMIT 5; """
 df_imdb_content = pd.read_sql(query, engine)
 st.table(df_imdb_content)
+
+
+
+# Closing MySQL connection
+conn.close()
+engine.dispose()
