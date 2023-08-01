@@ -54,21 +54,19 @@ git clone https://github.com/CedricCouche/MovieReco.git
 This project is base on python==3.7.10
 
 ```
-# Install de PIP (nécessaire à PyEnv)
+# Install de PIP (Prerequisite to install PyEnv)
 sudo apt install pip
 
-# Cloner le repo
+# Clone PyEnv repository
 git clone https://github.com/pyenv/pyenv.git ~/.pyenv # pyenv est isntallé dans cedric
 
 # compile :
 cd ~/.pyenv && src/configure && make -C src
 
-# Ajouter les commandes à son .profile (stocké dans /home/cedric) : selon la distrib, checker le github pour .bach_profile ou autres
+# Add commands to its .profile (often stored /home/user) : it can change from one linux distrib to anther, please check github for .bach_profile or others
 echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.profile
 echo 'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.profile
 echo 'eval "$(pyenv init -)"' >> ~/.profile
-
-# For path to take effect
 exec "$SHELL"
 
 sudo apt install build-essential libssl-dev zlib1g-dev \
@@ -79,6 +77,7 @@ libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-d
 Reboot the distant machine
 
 ```
+# Installation of Python 3.8.10
 pyenv install 3.8.10
 cd ~/MovieReco && pyenv local 3.8.10
 ```
