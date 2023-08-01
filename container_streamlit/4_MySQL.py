@@ -26,6 +26,7 @@ connection_url = 'mysql://{user}:{password}@{url}/{database}'.format(
     database    = mysql['database_name']
     )
 
+
 engine = create_engine(connection_url)
 conn = engine.connect()
 inspector = inspect(engine)

@@ -1,15 +1,21 @@
-FROM ubuntu:22.04
+FROM debian:11
 
 RUN apt-get update && apt-get install -y \
     python3 \
-    python3-pip
+    python3-pip \
+    default-libmysqlclient-dev \
+    libssl-dev
+
+RUN pip3 install mysqlclient \
+    mysql-connector-python \
+    sqlalchemy \
+    SQLAlchemy-Utils
 
 RUN pip install \
     streamlit \
     requests \
     numpy \
-    pandas \
-    SQLAlchemy
+    pandas
 
 RUN mkdir app
 RUN cd app

@@ -137,7 +137,7 @@ services:
     restart: always
 
   container_stream:
-    image: cedric256/moviereco_streamlit:1.0.4
+    image: cedric256/moviereco_streamlit:1.0.8
     container_name: container_stream
     ports:
       - "8501:8501"
