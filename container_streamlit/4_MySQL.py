@@ -42,13 +42,13 @@ st.markdown('## Tables Info')
 
 st.markdown('### imdb_content')
 
-imdb_content_rows = engine.query(func.count(imdb_content.tconst)).scalar()
-st.write('Number of rows: ', imdb_content_rows)
+# imdb_content_rows = engine.query(func.count(imdb_content.tconst)).scalar()
+# st.write('Number of rows: ', imdb_content_rows)
 
+st.markdown('Table sample : ')
 query = """ SELECT * FROM imdb_content LIMIT 5; """
 df_imdb_content = pd.read_sql(query, engine)
 st.table(df_imdb_content)
-
 
 
 # Closing MySQL connection
