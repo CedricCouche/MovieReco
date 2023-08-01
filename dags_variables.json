@@ -1,8 +1,7 @@
 {
-    "database_name": "db_movie",
-    "imdb_base_url": "https://datasets.imdbws.com/",
-    "imdb_files_names": {
-        "list": [
+    "imdb": {
+        "base_url": "https://datasets.imdbws.com/",
+        "file_names": [
             "title.basics.tsv.gz",
             "name.basics.tsv.gz",
             "title.akas.tsv.gz",
@@ -18,10 +17,7 @@
         "url": "container_mysql:3306",
         "user": "root"
     },
-    "mysql_password": "********",
-    "mysql_pw": "my-secret-pw",
-    "mysql_url": "container_mysql:3306",
-    "mysql_user": "root",
+    "mysql-pw": "my-secret-pw",
     "path_processed_data": "/app/processed_data/",
     "path_raw_data": "/app/raw_data/",
     "path_reco_data": "/app/reco_data/",
