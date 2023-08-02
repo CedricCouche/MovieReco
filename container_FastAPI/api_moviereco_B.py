@@ -241,7 +241,8 @@ async def get_recommendation(tconst:str):
     engine = create_engine(connection_url, echo=True)
     conn = engine.connect()
 
-    stmt = 'SELECT * FROM {table} WHERE tconst={tconst};'.format(table=table_recocs, tconst=text(tconst))
+    #stmt = 'SELECT * FROM {table} WHERE tconst={tconst};'.format(table=table_recocs, tconst=text(tconst))
+    stmt = 'SELECT * FROM {table} WHERE tconst={tconst};'.format(table=table_recocs, tconst=str(tconst))
 
     with engine.connect() as connection:
         results = connection.execute(text(stmt))
@@ -287,6 +288,61 @@ async def get_recommendation(tconst:str):
                 
         return results[0]
 
+@api.get('/get_reco_cs_test/{tconst:str}', name="Return a list of similar movies" , tags=['Recommandation'])
+async def get_recommendation(tconst:str):
+    """ 
+    Return a list of similar movies
+    """
+
+    # Creating MySQL connection
+    engine = create_engine(connection_url, echo=True)
+    conn = engine.connect()
+
+    stmt = 'SELECT * FROM {table} WHERE tconst={tconst};'.format(table=table_recocs, tconst=str(tconst))
+
+    with engine.connect() as connection:
+        results = connection.execute(text(stmt))
+
+        results = [
+            RecoCS(
+                tconst=i[0],
+                top1=i[1],
+                top2=i[2],
+                top3=i[3],
+                top4=i[4],
+                top5=i[5],
+                top6=i[6],
+                top7=i[7],
+                top8=i[8],
+                top9=i[9],
+                top10=i[10],
+                score1=i[11],
+                score2=i[12],
+                score3=i[13],
+                score4=i[14],
+                score5=i[15],
+                score6=i[16],
+                score7=i[17],
+                score8=i[18],
+                score9=i[19],
+                score10=i[20]
+                ) for i in results.fetchall()]
+
+    if len(results) == 0:
+        # Closing MySQL connection
+        conn.close()
+        engine.dispose()
+
+        # Error handling
+        raise HTTPException(
+            status_code=404,
+            detail='Unknown movie')
+    else:
+        # Closing MySQL connection
+        conn.close()
+        engine.dispose()
+                
+        return results[0]
 
 
 @api.get('/get-films-list/{number:int}', name="get-films-list" , tags=['Info'])
