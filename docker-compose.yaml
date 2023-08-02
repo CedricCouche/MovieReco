@@ -97,7 +97,7 @@ services:
     restart: always
 
   container_api:
-    image: cedric256/moviereco_api:1.6.6
+    image: cedric256/moviereco_api:1.6.7
     container_name: container_api
     depends_on:
       container_mysql:
@@ -137,7 +137,7 @@ services:
     restart: always
 
   container_stream:
-    image: cedric256/moviereco_streamlit:1.1.4
+    image: cedric256/moviereco_streamlit:1.1.6
     container_name: container_stream
     ports:
       - "8501:8501"
