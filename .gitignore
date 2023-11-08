@@ -3,22 +3,11 @@
 
 # Folder exclusion
 .venv/*
-work-in-progress
-dags_graveyard
+deprecated_files/*
 api_logs/*
 logs/*
 raw_data/*
 processed_data/*
-db_dump_temp
-
-
-work_airflow/*
-model_cosine-similarity/*
-model_kmeans/*
-scripts_mysql/*
-scripts_preprocess/*
-Utils/*
-
 
 # Folder keep
 !api_logs/.gitkeep
