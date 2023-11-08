@@ -21,5 +21,5 @@ RUN pip3 install requests \
 EXPOSE 8000
 WORKDIR /home
 RUN mkdir log data
-ADD api_moviereco_B.py ./
+ADD api_moviereco.py ./
 CMD uvicorn api_moviereco_B:api --host 0.0.0.0
