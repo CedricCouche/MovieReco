@@ -3,7 +3,7 @@
 
 # Folder exclusion
 .venv/*
-deprecated_files/*
+.deprecated_files/*
 api_logs/*
 logs/*
 raw_data/*
