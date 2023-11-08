@@ -41,6 +41,8 @@ my_dag = DAG(
 # -------------------------------------- #
 
 
+# imdb_base_url       = Variable.get("imdb_base_url")
+# imdb_files_names    = Variable.get("imdb_files_names", deserialize_json=True)["list"]
 imdb_base_url       = Variable.get("imdb", deserialize_json=True)["base_url"]
 imdb_files_names    = Variable.get("imdb", deserialize_json=True)["file_names"]
 

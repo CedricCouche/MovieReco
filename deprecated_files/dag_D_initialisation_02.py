@@ -40,6 +40,8 @@ my_dag = DAG(
 # -------------------------------------- #
 
 
+# imdb_base_url       = Variable.get("imdb_base_url")
+# imdb_files_names    = Variable.get("imdb_files_names", deserialize_json=True)["list"]
 imdb_base_url       = Variable.get("imdb", deserialize_json=True)["base_url"]
 imdb_files_names    = Variable.get("imdb", deserialize_json=True)["file_names"]
 processed_filenames = Variable.get("processed_filenames", deserialize_json=True)["list"]
@@ -169,6 +171,9 @@ def process_title_basics(source_path):
 
         # Store data in MySQL DB
         df.to_sql('imdb_titlebasics', engine, if_exists='replace', index=False)
+
+        # Save in CSV
+        # df.to_csv(destination_path, index=False, compression="zip")
 
 
         # Deletion of df to save memory
@@ -401,6 +406,7 @@ def process_title_akas(source_path):
         # del df
 
         # print('process done')
+
 
         return 0
 
