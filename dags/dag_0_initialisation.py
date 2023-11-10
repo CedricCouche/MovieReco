@@ -25,7 +25,7 @@ from sqlalchemy_utils import database_exists, create_database
 # -------------------------------------- #
 
 my_dag = DAG(
-    dag_id='D01_Initial_Load',
+    dag_id='D00_Initial_Load',
     description='Initial_Load',
     tags=['Initialisation'],
     default_args={

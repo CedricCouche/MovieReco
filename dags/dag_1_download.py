@@ -17,7 +17,7 @@ import requests
 # -------------------------------------- #
 
 my_dag = DAG(
-    dag_id='D02_Reccurent_download',
+    dag_id='D01_Reccurent_download',
     description='download data from IMDB',
     tags=['download'],
     schedule_interval=datetime.timedelta(hours=12),
