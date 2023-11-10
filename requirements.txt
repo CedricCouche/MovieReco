@@ -1,0 +1,12 @@
+mysqlclient
+mysql-connector-python
+SQLAlchemy
+SQLAlchemy-Utils
+fastapi
+pandas
+numpy
+scikit-learn
+tensorflow
+docker
+docker-compose
+requests

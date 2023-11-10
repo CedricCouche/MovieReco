@@ -1,6 +1,19 @@
+# File exclusion
+.*
+
+# Folder exclusion
+.venv/*
+.deprecated_files/*
+api_logs/*
 logs/*
-dags_graveyard/*
-work-in-progress/*
 raw_data/*
-db_dump_temp/*
 processed_data/*
+
+# Folder keep
+!api_logs/.gitkeep
+!logs/.gitkeep 
+!raw_data/.gitkeep 
+!processed_data/.gitkeep 
+
+# File keep
+!.python-version

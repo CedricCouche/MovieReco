@@ -1,2 +1,181 @@
-# DST_MLOPS_MovieReco
-MLOps project done for DataScientest
+# Projet Movie-Recommandation
+
+Version : 0.8.0
+
+## What is Movie-Recommandation project ?
+
+
+The main goal is to deploy a solution using MLOps, such as Docker and Airflow.
+The solution provide a list of 10 recommanded movies, based on one movie provided by the user.
+Several models will be implemented. The first ot this model is a cosine similarity.
+Approach choosen is content-based, so recommanded movies are choosen on similarites on a defined intrisec characteristic.
+
+
+## Architecture
+
+The solution is contained in a Airflow docker-compose.
+Airflow is used as a pipeline from download to pre-processing and as last recommandation computation.
+Data and recommandations are hosted in a MySQL container.
+A FastAPI container provide a secured access to recommandations.
+At last, a streamlit container is available as front to users.
+
+
+## Data
+
+- [https://www.imdb.com/interfaces/](https://www.imdb.com/interfaces/)
+
+For this project, and due to limited computer ressources, we used the table contained in the file title.basics.tsv.gz
+
+Our final table used for recommandation is the one below :
+- tconst : movie id from IMDB
+- titleType
+- primaryTitle
+- genres
+- RuntimeCategory
+- YearCategory 
+- combined-features : this field concatenante several fields, and after a tokenization step, will become the vector for cosine-similarity computation
+
+
+
+## How to install on distant machine (Ubuntu / Debian) ?
+
+For information, OS used for this project is Ubuntu 22.04 (LTS)
+
+Recommanded configuration : 2-core CPU and 16G of RAM
+
+
+#### Repository clone
+
+``` 
+git clone https://github.com/CedricCouche/MovieReco.git
+```
+
+#### General purpose Linux packages
+
+Some linux packages a required
+
+```
+sudo apt update && apt upgrade
+sudo apt install pip
+```
+
+#### Installation of Docker
+
+To install Docker, please refers to tutorial provided by Docker : https://docs.docker.com/engine/install/
+
+Other packages:
+```
+sudo apt install docker-compose
+```
+
+
+#### Linux packages installation for MySQL
+
+SQLAlchemy python package requires  mysqlclient and  mysql-connector-python packages, but both packages requires to be built, and requires some additionnals packages to be installed on linux
+
+```
+sudo apt install build-essential libssl-dev python3-dev default-libmysqlclient-dev
+
+# if last package is not found, try this one : 
+sudo apt install libmysqlclient-dev
+
+# Package to be interact direclty with MySQL
+sudo apt install mysql-client-core-8.0
+```
+
+
+#### Python version set-up using PyEnv
+
+To ensure consitency and reliability, python version is defined.
+This project is based on python==3.11.05
+To manage python version, we are using pyenv.
+
+
+Please refers to pyenv official installation guide here: https://github.com/pyenv/pyenv#installation
+
+Here are some additionnal packages to install & compile et python version:
+```
+sudo apt install build-essential libssl-dev zlib1g-dev \
+libbz2-dev libreadline-dev libsqlite3-dev curl \
+libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+```
+
+At last, we can download and define ou python version:
+```cd
+# Installation of Python 3.11.05
+pyenv install 3.11.05
+cd ~/MovieReco && pyenv local 3.11.05
+```
+
+
+
+#### Virtual environnement set-up
+
+```
+cd ~/MovieReco && python3 -m venv .venv
+source .venv/bin/activate
+```
+
+#### Python Packages installation
+
+``` bash
+pip install -r requirements.txt
+```
+
+
+#### Permission changes
+
+```
+sudo chmod -R 777 logs/ raw_data/ processed_data/ db_dump/ api_logs/
+```
+
+#### Airflow initialisation
+
+Airflow requires an initialisation phase.
+
+```
+sudo service docker start
+sudo docker-compose up airflow-init
+```
+
+If everything went well, last line should display "mlops-movie-recommandation_airflow-init_1 exited with code 0"
+
+#### Airflow start
+
+Start of container in a detached mode
+```
+sudo docker-compose up -d
+```
+
+#### SSH Tunnel initialisation
+
+- Airflow interface will be available on port 8080
+- FastAPI is available on port 8000
+- Streamlit App is available on port 8501
+
+Tunnel SSH initialisation :
+``` bash
+# From your local machine :
+ssh -i "your_key.pem" -L 8000:localhost:8000 -L 8080:localhost:8080 -L 8501:localhost:8501 user@server-ip-address
+
+```
+
+#### Airflow Connection
+
+login: airflow
+password: airflow
+
+
+#### Airflow variables load
+
+Variables are required to run DAGs, thy are store in the file dags_variables.json
+In Airflow web-interface, go in menu Admin > Variables
+Import the file dag_variables.json
+
+
+#### Airflow Dags
+
+Airflow is now ready, and in Dags tab you should see several dags.
+
+The first one to trigger is 
+
