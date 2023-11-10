@@ -9,15 +9,7 @@ from airflow.operators.python import PythonOperator
 from airflow.models import Variable
 
 import datetime
-import pandas as pd
 import requests
-import numpy as np
-import string
-
-import sqlalchemy
-from sqlalchemy import create_engine, inspect
-from sqlalchemy import Table, Column, Integer, String, ForeignKey, MetaData, text 
-from sqlalchemy_utils import database_exists, create_database
 
 
 # -------------------------------------- #
@@ -25,9 +17,9 @@ from sqlalchemy_utils import database_exists, create_database
 # -------------------------------------- #
 
 my_dag = DAG(
-    dag_id='D02_Reccurent_download_v01',
+    dag_id='D02_Reccurent_download',
     description='download data from IMDB',
-    tags=['download', 'Process_D'],
+    tags=['download'],
     schedule_interval=datetime.timedelta(hours=12),
     default_args={
         'owner': 'airflow',

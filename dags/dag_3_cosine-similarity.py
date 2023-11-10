@@ -26,9 +26,9 @@ from sklearn.metrics.pairwise import cosine_similarity
 
 
 my_dag = DAG(
-    dag_id='D04_cosine-similarity_v01',
-    description='cosine-similarity_D',
-    tags=['model', 'Process_D'],
+    dag_id='D03_cosine-similarity',
+    description='cosine-similarity_model',
+    tags=['model'],
     schedule_interval=datetime.timedelta(hours=12),
     default_args={
         'owner': 'airflow',
@@ -53,7 +53,7 @@ database_name  = Variable.get("mysql", deserialize_json=True)["database_name"]
 # FUNCTIONS
 # -------------------------------------- #
 
-def cosine_similarity(top_n):
+def cosine_similarity_A(top_n):
         """
         This function build the combined feature that will be used for cosine similarity
         """
@@ -153,6 +153,7 @@ def cosine_similarity(top_n):
         return 0
 
 
+
 # -------------------------------------- #
 # TASKS
 # -------------------------------------- #
@@ -160,7 +161,7 @@ def cosine_similarity(top_n):
 
 task1 = PythonOperator(
     task_id='cosine_similarity',
-    python_callable=cosine_similarity,
+    python_callable=cosine_similarity_A,
     op_kwargs={'top_n':11},
     dag=my_dag
 )
