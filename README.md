@@ -1,22 +1,23 @@
 # Projet Movie-Recommandation
 
+Version : 0.8.0
 
 ## What is Movie-Recommandation project ?
 
-This project is realized in team during a MLOps training provided by [DataScientest](https://datascientest.com/).
-The main goal is to deploy a solution using MLOps techniques we have learn.
 
+The main goal is to deploy a solution using MLOps, such as Docker and Airflow.
 The solution provide a list of 10 recommanded movies, based on one movie provided by the user.
-Approach choosen by the team is content-based, so recommanded movies are choosen on similarites on a defined intrisec characteristic.
-Similarity between movies are computed using a cosine similarity
+Several models will be implemented. The first ot this model is a cosine similarity.
+Approach choosen is content-based, so recommanded movies are choosen on similarites on a defined intrisec characteristic.
 
 
 ## Architecture
 
 The solution is contained in a Airflow docker-compose.
-Airflow is used as a pipeline pre-processing, from download to data-base storage.
-Data are hosted in a MySQL container.
-A FastAPI container is containing cosine-similarity calculation, based on data retrieved from MySQL container.
+Airflow is used as a pipeline from download to pre-processing and as last recommandation computation.
+Data and recommandations are hosted in a MySQL container.
+A FastAPI container provide a secured access to recommandations.
+At last, a streamlit container is available as front to users.
 
 
 ## Data
@@ -49,36 +50,30 @@ Recommanded configuration : 2-core CPU and 16G of RAM
 git clone https://github.com/CedricCouche/MovieReco.git
 ```
 
-#### Python version set-up
+#### General purpose Linux packages
 
-This project is based on python==3.11.05
-
-```
-# Install de PIP (Prerequisite to install PyEnv)
-sudo apt install pip
-```
-
-Please refers to pyenv official installation guide here: https://github.com/pyenv/pyenv#installation
-
-```
-sudo apt install build-essential libssl-dev zlib1g-dev \
-libbz2-dev libreadline-dev libsqlite3-dev curl \
-libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
-```
-
-
-```cd
-# Installation of Python 3.11.05
-pyenv install 3.11.05
-cd ~/MovieReco && pyenv local 3.11.05
-```
-
-#### Linux packages installation
-
-SQLAlchemy python package requires  mysqlclient and  mysql-connector-python packages, but both packages requires to be built, and requires some additionnales packages to be installed on linux
+Some linux packages a required
 
 ```
 sudo apt update && apt upgrade
+sudo apt install pip
+```
+
+#### Installation of Docker
+
+To install Docker, please refers to tutorial provided by Docker : https://docs.docker.com/engine/install/
+
+Other packages:
+```
+sudo apt install docker-compose
+```
+
+
+#### Linux packages installation for MySQL
+
+SQLAlchemy python package requires  mysqlclient and  mysql-connector-python packages, but both packages requires to be built, and requires some additionnals packages to be installed on linux
+
+```
 sudo apt install build-essential libssl-dev python3-dev default-libmysqlclient-dev
 
 # if last package is not found, try this one : 
@@ -86,10 +81,33 @@ sudo apt install libmysqlclient-dev
 
 # Package to be interact direclty with MySQL
 sudo apt install mysql-client-core-8.0
-
-# at last, some remaining packages
-sudo apt install pip docker-compose
 ```
+
+
+#### Python version set-up using PyEnv
+
+To ensure consitency and reliability, python version is defined.
+This project is based on python==3.11.05
+To manage python version, we are using pyenv.
+
+
+Please refers to pyenv official installation guide here: https://github.com/pyenv/pyenv#installation
+
+Here are some additionnal packages to install & compile et python version:
+```
+sudo apt install build-essential libssl-dev zlib1g-dev \
+libbz2-dev libreadline-dev libsqlite3-dev curl \
+libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
+```
+
+At last, we can download and define ou python version:
+```cd
+# Installation of Python 3.11.05
+pyenv install 3.11.05
+cd ~/MovieReco && pyenv local 3.11.05
+```
+
+
 
 #### Virtual environnement set-up
 
@@ -147,6 +165,7 @@ ssh -i "your_key.pem" -L 8000:localhost:8000 -L 8080:localhost:8080 -L 8501:loca
 login: airflow
 password: airflow
 
+
 #### Airflow variables load
 
 Variables are required to run DAGs, thy are store in the file dags_variables.json
@@ -154,5 +173,9 @@ In Airflow web-interface, go in menu Admin > Variables
 Import the file dag_variables.json
 
 
+#### Airflow Dags
 
+Airflow is now ready, and in Dags tab you should see several dags.
+
+The first one to trigger is 
 
