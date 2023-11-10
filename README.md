@@ -51,35 +51,26 @@ git clone https://github.com/CedricCouche/MovieReco.git
 
 #### Python version set-up
 
-This project is base on python==3.7.10
+This project is based on python==3.11.05
 
 ```
 # Install de PIP (Prerequisite to install PyEnv)
 sudo apt install pip
+```
 
-# Clone PyEnv repository
-git clone https://github.com/pyenv/pyenv.git ~/.pyenv # pyenv est isntallé dans cedric
+Please refers to pyenv official installation guide here: https://github.com/pyenv/pyenv#installation
 
-# compile :
-cd ~/.pyenv && src/configure && make -C src
-
-# Add commands to its .profile (often stored /home/user) : it can change from one linux distrib to anther, please check github for .bach_profile or others
-echo 'export PYENV_ROOT="$HOME/.pyenv"' >> ~/.profile
-echo 'command -v pyenv >/dev/null || export PATH="$PYENV_ROOT/bin:$PATH"' >> ~/.profile
-echo 'eval "$(pyenv init -)"' >> ~/.profile
-exec "$SHELL"
-
+```
 sudo apt install build-essential libssl-dev zlib1g-dev \
 libbz2-dev libreadline-dev libsqlite3-dev curl \
 libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-dev
 ```
 
-Reboot the distant machine
 
-```
-# Installation of Python 3.8.10
-pyenv install 3.8.10
-cd ~/MovieReco && pyenv local 3.8.10
+```cd
+# Installation of Python 3.11.05
+pyenv install 3.11.05
+cd ~/MovieReco && pyenv local 3.11.05
 ```
 
 #### Linux packages installation
@@ -88,9 +79,7 @@ SQLAlchemy python package requires  mysqlclient and  mysql-connector-python pack
 
 ```
 sudo apt update && apt upgrade
-sudo apt install build-essential libssl-dev
-sudo apt install python3-dev
-sudo apt install default-libmysqlclient-dev
+sudo apt install build-essential libssl-dev python3-dev default-libmysqlclient-dev
 
 # if last package is not found, try this one : 
 sudo apt install libmysqlclient-dev
