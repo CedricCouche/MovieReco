@@ -113,6 +113,10 @@ class RecoCS(BaseModel):
     score9: float
     score10: float
 
+class RecoTest(BaseModel):
+    tconst: str
+    titles: list[str]
+    scores: list[float]
 
 
 # ---------- API INITIALISATION ---------- #
@@ -121,7 +125,7 @@ class RecoCS(BaseModel):
 api = FastAPI(
     title="Movie recommendation",
     description="Content based Movie recommendation",
-    version="1.6.5",
+    version="1.7.6",
     openapi_tags=[
               {'name':'Info', 'description':'Info'},
               {'name':'Recommandation','description':'Get recommendation'}, 
@@ -231,7 +235,7 @@ async def get_filminfo(tconst):
         return results[0]
 
 
-@api.get('/get_reco_cs/{tconst:str}', name="Return a list of similar movies" , tags=['Recommandation'])
+@api.get('/get_reco_cs01/{tconst:str}', name="Return a list of similar movies" , tags=['Recommandation'])
 async def get_recommendation(tconst:str):
     """ 
     Return a list of similar movies
@@ -288,7 +292,8 @@ async def get_recommendation(tconst:str):
                 
         return results[0]
 
-@api.get('/get_reco_cs_test/{tconst:str}', name="Return a list of similar movies" , tags=['Recommandation'])
+
+@api.get('/get_reco_cs02/{tconst:str}', name="Return a list of similar movies" , tags=['Recommandation'])
 async def get_recommendation(tconst:str):
     """ 
     Return a list of similar movies
@@ -304,28 +309,10 @@ async def get_recommendation(tconst:str):
         results = connection.execute(text(stmt))
 
         results = [
-            RecoCS(
-                tconst=i[0],
-                top1=i[1],
-                top2=i[2],
-                top3=i[3],
-                top4=i[4],
-                top5=i[5],
-                top6=i[6],
-                top7=i[7],
-                top8=i[8],
-                top9=i[9],
-                top10=i[10],
-                score1=i[11],
-                score2=i[12],
-                score3=i[13],
-                score4=i[14],
-                score5=i[15],
-                score6=i[16],
-                score7=i[17],
-                score8=i[18],
-                score9=i[19],
-                score10=i[20]
+            RecoTest(
+                tconst = i[0],
+                titles = [ i[1], i[2], i[3], i[4], i[5], i[6], i[7], i[8], i[9], i[10] ],
+                scores = [ i[11], i[12],i[13],i[14],i[15],i[16],i[17],i[18],i[19],i[20] ]
                 ) for i in results.fetchall()]
 
     if len(results) == 0:
@@ -341,7 +328,7 @@ async def get_recommendation(tconst:str):
         # Closing MySQL connection
         conn.close()
         engine.dispose()
-                
+    
         return results[0]
 
 
