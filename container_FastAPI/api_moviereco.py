@@ -1,5 +1,6 @@
-
-# ---------- Imports ---------- #
+# -------------------------------------- #
+#                Imports                 #
+# -------------------------------------- #
 
 from fastapi import FastAPI, status, Header, Response, HTTPException
 from pydantic import BaseModel
@@ -16,16 +17,16 @@ from fastapi.security.api_key import APIKeyHeader, APIKey
 import pandas as pd
 import zipfile as zipfile
 
-
 import sqlalchemy
 from sqlalchemy import Table, Column, Integer, String, ForeignKey, MetaData, create_engine, text, inspect, select
 from sqlalchemy_utils import database_exists, create_database
 
 
-# ---------- MySQL Connection ---------- #
+# -------------------------------------- #
+#           MySQL Connection             #
+# -------------------------------------- #
 
 
-#mysql_url = 'container_mysql:3306'
 mysql_url = os.environ.get('MYSQL_URL')
 mysql_user = os.environ.get('MYSQL_USER')
 mysql_password = os.environ.get('MYSQL_ROOT_PASSWORD')
@@ -37,37 +38,23 @@ table_recocs = os.environ.get('MYSQL_TABLE_CS')
 
 # Creating the URL connection
 connection_url = 'mysql://{user}:{password}@{url}/{database}'.format(
-    user=mysql_user,
-    password=mysql_password,
-    url=mysql_url,
+    user = mysql_user,
+    password = mysql_password,
+    url = mysql_url,
     database = database_name
 )
 
-
-
-
-# ---------- Function definition ---------- #
-
+# -------------------------------------- #
+#         Function definition            #
+# -------------------------------------- #
 
 def convert_df_to_json(df):
     return Response(df.to_json(orient="records"), media_type="application/json")
 
 
-# ---------- Load data for recommandation ---------- #
-
-
-# # Load data from MySQL
-# stmt = 'SELECT tconst, combined_features FROM {table};'.format(table=table_movies)
-# df = pd.read_sql(sql=text(stmt), con=conn)
-
-
-# # Load users
-# stmt = 'SELECT * FROM {table};'.format(table=table_users)
-# df_users = pd.read_sql(sql=text(stmt), con=conn)
-
-
-# ---------- Pydantic class ---------- #
-
+# -------------------------------------- #
+#            Pydantic class              #
+# -------------------------------------- #
 
 class User(BaseModel):
     user_id: str
@@ -118,14 +105,14 @@ class RecoTest(BaseModel):
     titles: list[str]
     scores: list[float]
 
-
-# ---------- API INITIALISATION ---------- #
-
+# -------------------------------------- #
+#           API INITIALISATION           #
+# -------------------------------------- #
 
 api = FastAPI(
     title="Movie recommendation",
     description="Content based Movie recommendation",
-    version="1.7.6",
+    version="1.0.0",
     openapi_tags=[
               {'name':'Info', 'description':'Info'},
               {'name':'Recommandation','description':'Get recommendation'}, 
@@ -133,18 +120,72 @@ api = FastAPI(
              ]
 )
 
+# -------------------------------------- #
+#            SECURITY : ADMIN            #
+# -------------------------------------- #
 
-# ---------- SECURITY : ADMIN ---------- #
-
-
-
-
-# ---------- SECURITY : USERS ---------- #
-
+API_KEY = os.environ.get('API_KEY')
+API_KEY_NAME = os.environ.get('API_KEY_NAME')
 
 
+api_key_header = APIKeyHeader(name=API_KEY_NAME, auto_error=False)
 
-# ---------- API Routes ---------- #
+async def get_api_key(api_key_header: str = Security(api_key_header)):
+    if api_key_header == API_KEY:
+        return api_key_header
+    raise HTTPException(
+        status_code=status.HTTP_403_FORBIDDEN,
+        detail="Could not validate credentials"
+    )
+
+
+# -------------------------------------- #
+#            SECURITY : USERS            #
+# -------------------------------------- #
+
+security = HTTPBasic()
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+
+users_b = {
+    "Admin": {
+        "username": "admin",
+        "name": "Admin",
+        'role' : ['admin'],
+        "hashed_password": pwd_context.hash('Admin'),
+    },
+    "Streamlit": {
+        "username": "Streamlit",
+        "name": "Streamlit",
+        'role' : ['user'],
+        "hashed_password": pwd_context.hash('Streamlit'),
+    },
+    "Dominique": {
+        "username": "Dominique",
+        "name": "Dominique",
+        'role' : ['user'],
+        "hashed_password": pwd_context.hash('Dominique'),
+    },
+    "Diane": {
+        "username": "Diane",
+        "name": "Diane",
+        'role' : ['user'],
+        "hashed_password": pwd_context.hash('Diane'),
+    }
+}
+
+def get_current_user(credentials: HTTPBasicCredentials = Depends(security)):
+    username = credentials.username
+    if not(users_b.get(username)) or not(pwd_context.verify(credentials.password, users_b[username]['hashed_password'])):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Incorrect ID or password",
+            headers={"WWW-Authenticate": "Basic"},
+        )
+        
+
+# -------------------------------------- #
+#               API Routes               #
+# -------------------------------------- #
 
 
 @api.get('/status', tags=['Info']) 
@@ -153,15 +194,13 @@ async def get_status():
 
 
 @api.get('/welcome',  name="Return a list of users", response_model=User, tags=['Info'])
-async def get_users():
+async def get_users(username: str = Depends(get_current_user)):
     """ 
     Return the list of users
     """
     # Creating MySQL connection
     engine = create_engine(connection_url, echo=True)
     conn = engine.connect()
-    #inspector = inspect(engine)
-
 
     stmt = 'SELECT * FROM {table};'.format(table=table_users)
 
@@ -186,7 +225,7 @@ async def get_users():
 
 
 @api.get('/get-film-info/{tconst:str}', name="Return information on a film" , response_model=Movie, tags=['Info'])
-async def get_filminfo(tconst):
+async def get_filminfo(tconst, username: str = Depends(get_current_user)):
     """ 
     Return information on a film
     """
@@ -194,8 +233,6 @@ async def get_filminfo(tconst):
     # Creating MySQL connection
     engine = create_engine(connection_url, echo=True)
     conn = engine.connect()
-    #inspector = inspect(engine)
-
 
     stmt = 'SELECT * FROM {table} WHERE tconst = {tconst};'.format(table=table_movies, tconst=text(tconst))
 
@@ -236,7 +273,7 @@ async def get_filminfo(tconst):
 
 
 @api.get('/get_reco_cs01/{tconst:str}', name="Return a list of similar movies" , tags=['Recommandation'])
-async def get_recommendation(tconst:str):
+async def get_recommendation(tconst:str, username: str = Depends(get_current_user)):
     """ 
     Return a list of similar movies
     """
@@ -294,7 +331,7 @@ async def get_recommendation(tconst:str):
 
 
 @api.get('/get_reco_cs02/{tconst:str}', name="Return a list of similar movies" , tags=['Recommandation'])
-async def get_recommendation(tconst:str):
+async def get_recommendation(tconst:str, username: str = Depends(get_current_user)):
     """ 
     Return a list of similar movies
     """
@@ -333,7 +370,7 @@ async def get_recommendation(tconst:str):
 
 
 @api.get('/get-films-list/{number:int}', name="get-films-list" , tags=['Info'])
-async def list_films(number:int):
+async def list_films(number:int, username: str = Depends(get_current_user)):
     """ 
     get a list of films
     """
