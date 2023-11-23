@@ -1,3 +1,5 @@
+# ----- Imports ----- #
+
 import streamlit as st
 import requests
 
@@ -8,17 +10,15 @@ from sqlalchemy import Table, Column, Integer, String, ForeignKey, MetaData, tex
 from sqlalchemy import func
 
 
-st.markdown('# MySQL Info')
-
-
-# Variables
+# ---- Variables ---- #
 
 mysql = {"database_name": "db_movie", 
             "password": "my-secret-pw", 
             "url": "container_mysql:3306", 
             "user": "root" }
 
-# Connection to MySQL
+# ---- Connection to MySQL ---- #
+
 connection_url = 'mysql://{user}:{password}@{url}/{database}'.format(
     user        = mysql['user'],
     password    = mysql['password'],
@@ -30,6 +30,11 @@ engine = create_engine(connection_url)
 conn = engine.connect()
 inspector = inspect(engine)
 
+# ----- Body ----- #
+
+st.markdown('# MySQL Info')
+
+
 st.markdown('## DataBase Info')
 
 
@@ -39,11 +44,9 @@ st.write('list of tables : ', list_tables)
 
 st.markdown('## Tables Info')
 
+st.markdown('Coming soon !')
 
 st.markdown('### imdb_content')
-
-# imdb_content_rows = engine.query(func.count(imdb_content.tconst)).scalar()
-# st.write('Number of rows: ', imdb_content_rows)
 
 st.markdown('Table sample : ')
 query = """ SELECT * FROM imdb_content LIMIT 5; """

@@ -1,29 +1,33 @@
+# ----- Imports ----- #
+
 import streamlit as st
 import numpy as np
 import requests
 
-#### Variables ####
+# ----- Variables ----- #
 
 BaseURL = 'https://www.imdb.com/title/'
 
 
+# ----- Request Session ----- #
 
-#### Functions ####
+session = requests.Session()
+session.auth = ("Streamlit", "Streamlit") 
 
-# Note : http://localhost:8000/get_reco_cs/%22tt0001614%22
-# Note : http://localhost:8000/get_film-info/%22tt0001614%22
+
+# ----- Functions ----- #
 
 def get_film_info(tconst):
 
     endpoint = 'http://container_api:8000/get-film-info/{}'.format(str('%22'+tconst+'%22'))
-    response = requests.get(endpoint).json()
-
+    response = session.get(endpoint).json()
+    
     return response
 
 def get_reco_cs01(tconst):
 
     endpoint = 'http://container_api:8000/get_reco_cs01/{}'.format(str('%22'+tconst+'%22'))
-    response = requests.get(endpoint).json()
+    response = session.get(endpoint).json()
 
     return response
 
@@ -31,13 +35,13 @@ def get_reco_cs01(tconst):
 def get_reco_cs02(tconst):
 
     endpoint = 'http://container_api:8000/get_reco_cs02/{}'.format(str('%22'+tconst+'%22'))
-    response = requests.get(endpoint).json()
+    response = session.get(endpoint).json()
 
     return response
 
 
 
-#### Body ####
+# ----- Body ----- #
 
 st.markdown('# Movie Recommandation')
 
@@ -45,12 +49,10 @@ st.markdown('Select a movie')
 
 target_tconst = st.text_input('Movie tconst :', 'tt0000574')
 
-if st.button('Get film info 01'):
-    result = get_film_info(target_tconst)
-    st.write('result: %s' % result)
 
-if st.button('Get film info 02'):
+if st.button('Get info on film'):
     result = get_film_info(target_tconst)
+    
     st.write("tconst : ", result["tconst"])
     st.write("titleType: ", result["titleType"])
     st.write("primaryTitle: ", result["primaryTitle"])
@@ -65,15 +67,14 @@ if st.button('Get film info 02'):
     st.write("numVotes : ", result["numVotes"])
 
 
+if st.button('Get info on film (unformated)'):
+    result = get_film_info(target_tconst)
+    st.write('result: %s' % result)
+
 st.markdown('## Cosine Similarity TOP 10 recommandation')
 
 
-if st.button('Get Recommandation using Cosine Similarity (01)'):
-    result = get_reco_cs01(target_tconst)
-    st.write('result: %s' % result)
-
-
-if st.button('Get Recommandation using Cosine Similarity (02)'):
+if st.button('Get Recommandation using Cosine Similarity'):
     
     result = get_reco_cs02(target_tconst)
     
@@ -89,6 +90,11 @@ if st.button('Get Recommandation using Cosine Similarity (02)'):
         year = str(filmInfo["startYear"])
         genres = filmInfo["genres"]
         st.write('Matching score : ' + str(np.round(score,2)) + " Movie : ", '[' +title+ ', ' +year+  ' (' +genres+ ')]('+BaseURL + tconst+ ')')
+
+
+if st.button('Get Recommandation using Cosine Similarity (Unformated)'):
+    result = get_reco_cs01(target_tconst)
+    st.write('result: %s' % result)
 
 
 st.markdown('## Other Model (to come)')
