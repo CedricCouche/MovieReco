@@ -1,14 +1,15 @@
 # Projet Movie-Recommandation
 
-Version : 0.8.0
+Version : 1.0.0 "MVP"
 
 ## What is Movie-Recommandation project ?
 
 
 The main goal is to deploy a solution using MLOps, such as Docker and Airflow.
 The solution provide a list of 10 recommanded movies, based on one movie provided by the user.
-Several models will be implemented. The first ot this model is a cosine similarity.
+Several models will be implemented. The first ot this model is cosine similarity.
 Approach choosen is content-based, so recommanded movies are choosen on similarites on a defined intrisec characteristic.
+Main goal is to implement MLOps technologies, not to get the most relevant recommandation.
 
 
 ## Architecture
@@ -24,24 +25,47 @@ At last, a streamlit container is available as front to users.
 
 - [https://www.imdb.com/interfaces/](https://www.imdb.com/interfaces/)
 
-For this project, and due to limited computer ressources, we used the table contained in the file title.basics.tsv.gz
+For this project, and due to limited computer ressources, we used the table contained in the file title.basics.tsv.gz, title.crew.tsv.gz and title.ratings.tsv.gz. 
+
+### Data Cleaning
+ - Only rows corresponding to "movie" type are kept. 
+- At last, movies identified as Adult movies are removed.
+- Data is cleaned of errors
+
+### Main table
 
 Our final table used for recommandation is the one below :
+
 - tconst : movie id from IMDB
 - titleType
 - primaryTitle
+- startYear
+- runtimeMinutes
 - genres
 - RuntimeCategory
 - YearCategory 
-- combined-features : this field concatenante several fields, and after a tokenization step, will become the vector for cosine-similarity computation
+- directors_id	
+- writers_id	
+- averageRating	
+- numVotes
 
+
+## Models
+
+
+### Cosine Similarity
+
+Our first model, cosine similarity, was choose for its ease of implementation and computation. It has also the advantage to be computed within a dags, so it is ligther to process for API.
+
+Several fields are concatenated to build a single field, that will be tokenized to form our vector to computed against other movies.
+Fields used to create this combined features : ['primaryTitle','titleType', 'genres', 'runtimeCategory', 'yearCategory','directors_id', 'writers_id']
 
 
 ## How to install on distant machine (Ubuntu / Debian) ?
 
 For information, OS used for this project is Ubuntu 22.04 (LTS)
 
-Recommanded configuration : 2-core CPU and 16G of RAM
+Recommanded configuration : 2-core CPU and 16G of RAM at least.
 
 
 #### Repository clone
@@ -177,5 +201,8 @@ Import the file dag_variables.json
 
 Airflow is now ready, and in Dags tab you should see several dags.
 
-The first one to trigger is 
+The first to start is "initialisation", It will download files from IMDB and perform pre-process.
+Once done, dag cosine similarity has to be executed.
+dags download, preprocess and cosine similarity can be left active, as they are periodically triggers to refresh data & scores. 
+
 
