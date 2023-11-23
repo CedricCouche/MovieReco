@@ -1,8 +1,13 @@
+# ----- Imports ----- #
+
 import streamlit as st
 import requests
 
-st.markdown('# Structure')
 
+# ----- Body ----- #
+
+
+st.markdown('# Structure')
 
 
 st.markdown('## General structure')
