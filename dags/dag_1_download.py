@@ -52,7 +52,6 @@ def download():
 
         url = imdb_base_url + imdb_files_names[i]
         destination_path = path_raw_data + imdb_files_names[i]
-
         r = requests.get(url, allow_redirects=True)
         open(destination_path, 'wb').write(r.content)
 
