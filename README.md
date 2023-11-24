@@ -1,6 +1,6 @@
 # Projet Movie-Recommandation
 
-Version : 1.0.0 "MVP"
+Version : 2.0.0
 
 ## What is Movie-Recommandation project ?
 
