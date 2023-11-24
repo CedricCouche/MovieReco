@@ -71,16 +71,25 @@ x-airflow-common:
     AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK: 'true'
     # WARNING: Use _PIP_ADDITIONAL_REQUIREMENTS option ONLY for a quick checks
     # for other purpose (development, test and especially production usage) build/extend Airflow image.
-    _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:- scikit-learn tensorflow}
+    _PIP_ADDITIONAL_REQUIREMENTS: ${_PIP_ADDITIONAL_REQUIREMENTS:- scikit-learn}
   volumes:
     - ${AIRFLOW_PROJ_DIR:-.}/dags:/opt/airflow/dags
     - ${AIRFLOW_PROJ_DIR:-.}/logs:/opt/airflow/logs
     - ${AIRFLOW_PROJ_DIR:-.}/config:/opt/airflow/config
     - ${AIRFLOW_PROJ_DIR:-.}/plugins:/opt/airflow/plugins
     # MovieReco folders mount
-    - ${AIRFLOW_PROJ_DIR:-.}/raw_data:/opt/airflow/raw_data
-    - ${AIRFLOW_PROJ_DIR:-.}/processed_data:/opt/airflow/processed_data
-    - ${AIRFLOW_PROJ_DIR:-.}/api_logs:/opt/airflow/api_logs
+    #- ${AIRFLOW_PROJ_DIR:-.}/raw_data:/app/airflow/raw_data
+    #- ${AIRFLOW_PROJ_DIR:-.}/processed_data:/app/airflow/processed_data
+    #- ${AIRFLOW_PROJ_DIR:-.}/api_logs:/app/airflow/api_logs
+    - type: bind
+      source: ./raw_data
+      target: /app/raw_data
+    - type: bind
+      source: ./processed_data
+      target: /app/processed_data
+    - type: bind
+      source: ./api_logs
+      target: /app/api_logs
   user: "${AIRFLOW_UID:-50000}:0"
   depends_on:
     &airflow-common-depends-on
