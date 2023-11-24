@@ -111,7 +111,7 @@ sudo apt install mysql-client-core-8.0
 #### Python version set-up using PyEnv
 
 To ensure consitency and reliability, python version is defined.
-This project is based on python==3.11.05
+This project is based on python==3.11.5
 To manage python version, we are using pyenv.
 
 
@@ -126,9 +126,9 @@ libncursesw5-dev xz-utils tk-dev libxml2-dev libxmlsec1-dev libffi-dev liblzma-d
 
 At last, we can download and define ou python version:
 ```cd
-# Installation of Python 3.11.05
-pyenv install 3.11.05
-cd ~/MovieReco && pyenv local 3.11.05
+# Installation of Python 3.11.5
+pyenv install 3.11.5
+cd ~/MovieReco && pyenv local 3.11.5
 ```
 
 
