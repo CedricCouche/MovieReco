@@ -8,6 +8,7 @@ api_logs/*
 logs/*
 raw_data/*
 processed_data/*
+dags/__pycache__/*
 
 # Folder keep
 !api_logs/.gitkeep
