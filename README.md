@@ -27,6 +27,12 @@ At last, a streamlit container is available as front to users.
 
 For this project, and due to limited computer ressources, we used the table contained in the file title.basics.tsv.gz, title.crew.tsv.gz and title.ratings.tsv.gz. 
 
+## DAGs
+
+![DAG0 - Initial Load](https://github.com/CedricCouche/MovieReco/blob/main/images/dag_initial-load.png)
+
+![DAG03 - PreProcess](https://github.com/CedricCouche/MovieReco/blob/main/images/dag_movie-to-process.png)
+
 
 ## Models
 
