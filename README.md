@@ -27,28 +27,6 @@ At last, a streamlit container is available as front to users.
 
 For this project, and due to limited computer ressources, we used the table contained in the file title.basics.tsv.gz, title.crew.tsv.gz and title.ratings.tsv.gz. 
 
-### Data Cleaning
- - Only rows corresponding to "movie" type are kept. 
-- At last, movies identified as Adult movies are removed.
-- Data is cleaned of errors
-
-### Main table
-
-Our final table used for recommandation is the one below :
-
-- tconst : movie id from IMDB
-- titleType
-- primaryTitle
-- startYear
-- runtimeMinutes
-- genres
-- RuntimeCategory
-- YearCategory 
-- directors_id	
-- writers_id	
-- averageRating	
-- numVotes
-
 
 ## Models
 
@@ -186,8 +164,8 @@ ssh -i "your_key.pem" -L 8000:localhost:8000 -L 8080:localhost:8080 -L 8501:loca
 
 #### Airflow Connection
 
-login: airflow
-password: airflow
+- login: airflow
+- password: airflow
 
 
 #### Airflow variables load
