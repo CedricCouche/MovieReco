@@ -201,3 +201,10 @@ Once done, dag cosine similarity has to be executed.
 dags download, preprocess and cosine similarity can be left active, as they are periodically triggers to refresh data & scores. 
 
 
+## Screen Captures
+
+Fast API :
+![FastAPI](https://github.com/CedricCouche/MovieReco/blob/main/images/fastapi-doc.png)
+
+Streamlit
+![Streamlit](https://github.com/CedricCouche/MovieReco/blob/main/images/streamlit-recommendation.png)
