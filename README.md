@@ -1,6 +1,6 @@
 # Projet Movie-Recommandation
 
-Version : 1.0.0 "MVP"
+Version : 1.1.0
 
 ## What is Movie-Recommandation project ?
 
@@ -27,27 +27,22 @@ At last, a streamlit container is available as front to users.
 
 For this project, and due to limited computer ressources, we used the table contained in the file title.basics.tsv.gz, title.crew.tsv.gz and title.ratings.tsv.gz. 
 
-### Data Cleaning
- - Only rows corresponding to "movie" type are kept. 
-- At last, movies identified as Adult movies are removed.
-- Data is cleaned of errors
+## DAGs
 
-### Main table
+There are 4 DAGs :
+- 00 Initial Load : this dags covers download of file and preprocess of a limited number of them, to initialise MySQL tables. to be triggered only at startup.
+- 01 Recurrent download : download of IMDB files, triggered every days
+- 02 Recurrent Preprocess : Preprocess of new movies by batch, triggered every days
+- 03 Model 1 cosine similarity : computation of score for all movies available in MySQL, triggered every days
 
-Our final table used for recommandation is the one below :
+DAG00 Initial Load
+![DAG00 - Initial Load](https://github.com/CedricCouche/MovieReco/blob/main/images/dag_initial-load.png)
 
-- tconst : movie id from IMDB
-- titleType
-- primaryTitle
-- startYear
-- runtimeMinutes
-- genres
-- RuntimeCategory
-- YearCategory 
-- directors_id	
-- writers_id	
-- averageRating	
-- numVotes
+DAG02 PreProcess
+![DAG02 - PreProcess](https://github.com/CedricCouche/MovieReco/blob/main/images/dag_movie-to-process.png)
+
+DAG03 Cosine-Similarity
+![DAG03 - Cosine-Similarity](https://github.com/CedricCouche/MovieReco/blob/main/images/dag_cosine-similarity.png)
 
 
 ## Models
@@ -186,8 +181,8 @@ ssh -i "your_key.pem" -L 8000:localhost:8000 -L 8080:localhost:8080 -L 8501:loca
 
 #### Airflow Connection
 
-login: airflow
-password: airflow
+- login: airflow
+- password: airflow
 
 
 #### Airflow variables load
@@ -206,3 +201,10 @@ Once done, dag cosine similarity has to be executed.
 dags download, preprocess and cosine similarity can be left active, as they are periodically triggers to refresh data & scores. 
 
 
+## Screen Captures
+
+Fast API :
+![FastAPI](https://github.com/CedricCouche/MovieReco/blob/main/images/fastapi-doc.png)
+
+Streamlit
+![Streamlit](https://github.com/CedricCouche/MovieReco/blob/main/images/streamlit-recommendation.png)
