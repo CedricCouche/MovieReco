@@ -29,9 +29,20 @@ For this project, and due to limited computer ressources, we used the table cont
 
 ## DAGs
 
-![DAG0 - Initial Load](https://github.com/CedricCouche/MovieReco/blob/main/images/dag_initial-load.png)
+There are 4 DAGs :
+- 00 Initial Load : this dags covers download of file and preprocess of a limited number of them, to initialise MySQL tables. to be triggered only at startup.
+- 01 Recurrent download : download of IMDB files, triggered every days
+- 02 Recurrent Preprocess : Preprocess of new movies by batch, triggered every days
+- 03 Model 1 cosine similarity : computation of score for all movies available in MySQL, triggered every days
 
-![DAG03 - PreProcess](https://github.com/CedricCouche/MovieReco/blob/main/images/dag_movie-to-process.png)
+DAG00 Initial Load
+![DAG00 - Initial Load](https://github.com/CedricCouche/MovieReco/blob/main/images/dag_initial-load.png)
+
+DAG02 PreProcess
+![DAG02 - PreProcess](https://github.com/CedricCouche/MovieReco/blob/main/images/dag_movie-to-process.png)
+
+DAG03 Cosine-Similarity
+![DAG03 - Cosine-Similarity](https://github.com/CedricCouche/MovieReco/blob/main/images/dag_cosine-similarity.png)
 
 
 ## Models
